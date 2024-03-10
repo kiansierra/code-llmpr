@@ -1,0 +1,3 @@
+dataset_name:  "poem_sentiment"
+key_column: "verse_text"
+subsets: ['train', 'validation', 'test']
