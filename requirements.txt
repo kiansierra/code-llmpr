@@ -8,7 +8,6 @@ hydra-core
 jinja2
 kaggle
 loguru
-monai
 omegaconf
 peft
 pydantic

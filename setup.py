@@ -4,9 +4,9 @@ import os
 from setuptools import find_packages, setup
 
 # Package meta-data.
-NAME = "diffusers_trainers"
-DESCRIPTION = "Diffusers Trainer. PyTorch."
-URL = "https://github.com/kiansierra/stable-diffusion-training"
+NAME = "llm_prompt"
+DESCRIPTION = "https://www.kaggle.com/competitions/llm-prompt-recovery/code"
+URL = "https://github.com/kiansierra/code-llmpr"
 EMAIL = "kiansierra90@gmail.com"
 AUTHOR = "Kian Sierra McGettigan"
 REQUIRES_PYTHON = ">=3.9.0"
