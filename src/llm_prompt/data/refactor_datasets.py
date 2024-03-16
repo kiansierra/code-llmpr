@@ -1,5 +1,6 @@
 from typing import List, Optional
-from datasets import load_dataset, Dataset, concatenate_datasets
+
+from datasets import Dataset, concatenate_datasets, load_dataset
 
 NEW_KEY_COLUMN = "original_text"
 

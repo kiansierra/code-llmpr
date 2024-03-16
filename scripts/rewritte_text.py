@@ -1,5 +1,7 @@
-from datasets import load_from_disk, DatasetDict
-from llm_prompt import GemmaGenerator, REWRITE_TEMPLATE
+from datasets import DatasetDict, load_from_disk
+
+from llm_prompt import REWRITE_TEMPLATE, GemmaGenerator
+
 
 def main():
     dd = load_from_disk('../input/templates')

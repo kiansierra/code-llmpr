@@ -1,10 +1,10 @@
-from typing import Protocol
-import torch 
 import contextlib
 import os
-from gemma.config import  get_config_for_7b, get_config_for_2b
+from typing import Protocol
+
+import torch
+from gemma.config import get_config_for_2b, get_config_for_7b
 from gemma.model import GemmaForCausalLM
-from gemma.tokenizer import Tokenizer
 
 __all__ = ["BaseGenerator", "GemmaGenerator"]
 
