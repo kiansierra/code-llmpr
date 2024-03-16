@@ -16,10 +16,14 @@ python-dotenv
 pytorch_lightning
 scikit-learn>=1.0.0
 segmentation-models-pytorch
+sentence-transformers
 tensorboard
 torch
+torchvision
+torchaudio
 torchmetrics>=0.8.2
 transformers
+trl
 timm
 typing_extensions
 wandb

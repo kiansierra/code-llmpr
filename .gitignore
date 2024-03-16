@@ -10,8 +10,8 @@ wandb/*
 artifacts/*
 */artifacts/*
 # Repositories
-./gemma_pytorch/*
-
+gemma_pytorch/*
+axolotl/*
 # Ignore Used checkpoints
 *.pth
 *.bin
@@ -20,6 +20,7 @@ artifacts/*
 # Ignore Common Temporary output folders
 ./tmp/*
 tmp/*
+tmp_*/
 cache/*
 *.pt
 lightning_logs/*
