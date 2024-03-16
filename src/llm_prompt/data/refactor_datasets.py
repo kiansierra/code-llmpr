@@ -3,7 +3,7 @@ from datasets import load_dataset, Dataset, concatenate_datasets
 
 NEW_KEY_COLUMN = "original_text"
 
-__all__ = ["dataset_preprocess", "REWRITE_TEMPLATES"]
+__all__ = ["dataset_preprocess", "REWRITE_PROMPTS", "REWRITE_TEMPLATE"]
 
 def dataset_preprocess(dataset_name: str, key_column: str ,subsets:Optional[List[str]] = None) -> Dataset:
     subsets = subsets or ["train"]
@@ -20,9 +20,11 @@ def dataset_preprocess(dataset_name: str, key_column: str ,subsets:Optional[List
     return dataset
 
 
-REWRITE_TEMPLATES = [
-    "Rewrite in the style of a sea shanty. {}",
-    "Improve the text. {}",
-    "Rewrite this essay but do it using the writing style of Dr. Seuss. {}",
-    "Rewrite this essay but do it using the writing style of William Shakespeare. {}",
-    "Rewrite this essay but do it using the writing style of Tupac Shakur. {}",]
+REWRITE_PROMPTS = [
+    "Rewrite in the style of a sea shanty.",
+    "Improve the text.",
+    "Rewrite this essay but do it using the writing style of Dr. Seuss.",
+    "Rewrite this essay but do it using the writing style of William Shakespeare.",
+    "Rewrite this essay but do it using the writing style of Tupac Shakur.",]
+
+REWRITE_TEMPLATE = "{rewrite_prompt} {original_text}"

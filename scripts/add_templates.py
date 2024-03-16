@@ -1,22 +1,25 @@
 import os
-from llm_prompt import REWRITE_TEMPLATES
-from datasets import DatasetDict, Dataset, load_from_disk
+from llm_prompt import REWRITE_PROMPTS
+from datasets import DatasetDict, Dataset, load_from_disk, concatenate_datasets
 import pandas as pd
 
+SPLITS = ['train', 'validation', 'test']
+
 def main() -> None:
-    dataset_dict = load_from_disk("../inputs/raw")
+    raw_dataset_dict = load_from_disk("../input/raw")
     templates_df = pd.DataFrame({
-        'rewrite_prompt': REWRITE_TEMPLATES,
-        'key': [1]*len(REWRITE_TEMPLATES)
+        'rewrite_prompt': REWRITE_PROMPTS,
+        'key': [1]*len(REWRITE_PROMPTS)
     })
-    dataset_dict_templates = {}
-    for key, dataset in dataset_dict.items():
+    dataset_templates = []
+    for dataset in raw_dataset_dict.values():
         df = dataset.to_pandas()
         df['key'] = 1
         merged_df = df.merge(templates_df, on='key').drop(columns='key')
-        dataset_dict_templates[key] =  Dataset.from_pandas(merged_df)
-        
-    DatasetDict(dataset_dict_templates).save_to_disk("../inputs/templates")
+        dataset_templates.append(Dataset.from_pandas(merged_df))
+    dataset = concatenate_datasets(dataset_templates)
+    dataset_dict = {key: dataset.filter(lambda x: x['split'] == key) for key in SPLITS}
+    DatasetDict(dataset_dict).save_to_disk("../input/templates")
 
     
     

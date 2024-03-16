@@ -7,7 +7,7 @@ def main() -> None:
     dataset_configs = get_configs('dataset')
     dataset_dict = DatasetDict({key: dataset_preprocess(**val) for key, val in dataset_configs.items()})
     os.makedirs("../inputs", exist_ok=True)
-    dataset_dict.save_to_disk("../inputs/raw")
+    dataset_dict.save_to_disk("../input/raw")
     
 if __name__ == "__main__":
     main()
