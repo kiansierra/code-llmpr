@@ -2,7 +2,7 @@ from typing import Protocol
 import torch 
 import contextlib
 import os
-from gemma.config import GemmaConfig, get_config_for_7b, get_config_for_2b
+from gemma.config import  get_config_for_7b, get_config_for_2b
 from gemma.model import GemmaForCausalLM
 from gemma.tokenizer import Tokenizer
 

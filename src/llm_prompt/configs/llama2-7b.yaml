@@ -1,0 +1,24 @@
+model_org: meta-llama
+model_name: Llama-2-7b-hf
+
+model: 
+  pretrained_model_name_or_path: ${model_org}/${model_name}
+  device_map: auto
+
+
+trainer:
+  output_dir: ../checkpoints/${model_name}
+  per_device_train_batch_size: 4
+  save_steps: 300
+  save_total_limit: 2
+  overwrite_output_dir: True
+  dataloader_persistent_workers: False
+  optim: 'adamw_8bit'
+
+lora:
+    r: 8
+    lora_alpha: 8
+    lora_dropout: 0.1
+    target_modules: ["q_proj","k_proj","v_proj","o_proj"]
+    bias: "none"
+    task_type: "CAUSAL_LM"
