@@ -11,11 +11,13 @@ def dataset_preprocess(dataset_name: str, key_column: str ,subsets:Optional[List
     datasets = load_dataset(dataset_name)
     datasets = datasets.rename_column(key_column, NEW_KEY_COLUMN)
     datasets = datasets.select_columns([NEW_KEY_COLUMN])
+    datasets = datasets.map(lambda x: {"original_text": x[NEW_KEY_COLUMN]}, remove_columns=[NEW_KEY_COLUMN])
     dataset_list = []
     for subset in subsets:
         dataset = datasets[subset]
         dataset = dataset.add_column("source", [dataset_name] * len(dataset))
         dataset = dataset.add_column("split", [subset] * len(dataset))
+        dataset = dataset.map(lambda x: {'original_length': len(x.split(" "))}, input_columns=NEW_KEY_COLUMN)
         dataset_list.append(dataset)
     dataset = concatenate_datasets(dataset_list)
     return dataset
