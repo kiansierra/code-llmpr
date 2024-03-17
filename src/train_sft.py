@@ -5,6 +5,7 @@ from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 from transformers import (AutoModelForCausalLM, AutoTokenizer,
                           BitsAndBytesConfig, TrainingArguments)
 from trl import DataCollatorForCompletionOnlyLM, SFTTrainer
+from omegaconf import OmegaConf
 
 RESPONSE_TEMPLATE = "### Prompt Used: "
 
@@ -24,8 +25,8 @@ def main(config) -> None:
     tokenizer.pad_token = tokenizer.eos_token
     
     args = TrainingArguments(**config.trainer)
-    
-    lora_config = LoraConfig(**config.lora)
+    lora_config_resolved = OmegaConf.to_container(config.lora, resolve=True)
+    lora_config = LoraConfig(**lora_config_resolved)
     model = prepare_model_for_kbit_training(model)
     model = get_peft_model(model, lora_config)
     
@@ -34,6 +35,7 @@ def main(config) -> None:
         model,
         args,
         train_dataset=dataset_dict['train'],
+        eval_dataset=dataset_dict['validation'],
         formatting_func=formatting_prompts_func,
         data_collator=collator,
         max_seq_length=1024
