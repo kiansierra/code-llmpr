@@ -22,12 +22,34 @@ def dataset_preprocess(dataset_name: str, key_column: str ,subsets:Optional[List
     dataset = concatenate_datasets(dataset_list)
     return dataset
 
+AUTHORS = ["Dr. Seuss", "William Shakespeare", "Tupac Shakur",
+           "J.K Rowling", "Stephen King", "JRR Tolkien", "Paulo Coelho"]
 
-REWRITE_PROMPTS = [
-    "Rewrite in the style of a sea shanty.",
+STYLES = ["sea shanty", "rap song", "poem", "haiku", "limerick", "sonnet", "ballad", "ode", "epic"]
+
+AUTHOR_PROMPTS = [
+    "Rewrite this essay but do it using the writing style of {author}.",
+    "Transform this text as if it was written by {author}."
+]
+STYLE_PROMPTS = [
+    "Rewrite this text in the style of a {style}.",
+    "Transform this in to a {style}.",
+]
+
+BASIC_REWRITE_PROMPTS = [
+    "Rewrite this text.",
     "Improve the text.",
-    "Rewrite this essay but do it using the writing style of Dr. Seuss.",
-    "Rewrite this essay but do it using the writing style of William Shakespeare.",
-    "Rewrite this essay but do it using the writing style of Tupac Shakur.",]
+    "Make this text better.",
+    "Rewrite this essay.",
+    "Improve this essay.",
+    "Make this essay better.",
+]
+
+ALL_AUTHOR_PROMPTS = [prompt.format(author=author) for author in AUTHORS for prompt in AUTHOR_PROMPTS]
+ALL_STYLE_PROMPTS = [prompt.format(style=style) for style in STYLES for prompt in STYLE_PROMPTS]
+
+
+
+REWRITE_PROMPTS = BASIC_REWRITE_PROMPTS + ALL_AUTHOR_PROMPTS + ALL_STYLE_PROMPTS
 
 REWRITE_TEMPLATE = "{rewrite_prompt} {original_text}"
