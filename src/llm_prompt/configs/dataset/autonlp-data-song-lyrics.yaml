@@ -1,0 +1,3 @@
+dataset_name:  "juliensimon/autonlp-data-song-lyrics-demo"
+key_column: "text"
+subsets: ['train', 'validation']
