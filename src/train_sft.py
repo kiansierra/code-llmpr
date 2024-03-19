@@ -18,7 +18,7 @@ def formatting_prompts_func(example):
 
 @hydra.main(config_path="llm_prompt/configs", config_name="llama2-7b", version_base=None)
 def main(config) -> None:
-    dataset_dict = load_from_disk("../input/rewritten_texts")
+    dataset_dict = load_from_disk("../input/rewritten")
     quantization_config = BitsAndBytesConfig(load_in_8bit=True)
     model = AutoModelForCausalLM.from_pretrained(**config.model, quantization_config=quantization_config)
     tokenizer = AutoTokenizer.from_pretrained(config.model.pretrained_model_name_or_path)

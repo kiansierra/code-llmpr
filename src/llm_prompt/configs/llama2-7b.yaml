@@ -8,16 +8,18 @@ model:
 
 trainer:
   output_dir: ../checkpoints/${model_name}
-  per_device_train_batch_size: 4
+  per_device_train_batch_size: 8
   gradient_accumulation_steps: 8
-  save_strategy: epoch
-  num_train_epochs: 5
-  save_steps: 100
-  save_total_limit: 10
+  save_strategy: steps
+  num_train_epochs: 2
+  save_steps: 200
+  save_total_limit: 3
   overwrite_output_dir: True
-  dataloader_num_workers: 2
+  dataloader_num_workers: 8
   dataloader_persistent_workers: True
   optim: 'adamw_8bit'
+  group_by_length: True
+  length_column_name: 'original_length'
 
 lora:
     r: 8

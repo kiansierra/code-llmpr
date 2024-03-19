@@ -10,6 +10,19 @@
       "justMyCode": false
     },
     {
+      "name": "Rewrite Texts",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${file}",
+      "console": "integratedTerminal",
+      "justMyCode": false,
+      "args": [
+        "--num_samples", "2000",
+        "--seed", "42",
+        "--version", "2"
+      ]
+    },
+    {
       "name": "Debug axolotl prompt - sharegpt",
       "type": "debugpy",
       "module": "accelerate.commands.launch",
