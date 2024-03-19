@@ -29,26 +29,27 @@ STYLES = ["sea shanty", "rap song", "poem", "haiku", "limerick", "sonnet", "ball
 
 AUTHOR_PROMPTS = [
     "Rewrite this essay but do it using the writing style of {author}.",
-    "Transform this text as if it was written by {author}."
+    "Transform this text as if it was written by {author}.",
+    "Imagine {author} was to rewrite this text, what would it be like."
 ]
+
 STYLE_PROMPTS = [
     "Rewrite this text in the style of a {style}.",
     "Transform this in to a {style}.",
+    "How would you rewrite this text in the style of a {style}."
 ]
 
 BASIC_REWRITE_PROMPTS = [
-    "Rewrite this text.",
     "Improve the text.",
     "Make this text better.",
     "Rewrite this essay.",
     "Improve this essay.",
     "Make this essay better.",
+    "Summarize this text.",
 ]
 
 ALL_AUTHOR_PROMPTS = [prompt.format(author=author) for author in AUTHORS for prompt in AUTHOR_PROMPTS]
 ALL_STYLE_PROMPTS = [prompt.format(style=style) for style in STYLES for prompt in STYLE_PROMPTS]
-
-
 
 REWRITE_PROMPTS = BASIC_REWRITE_PROMPTS + ALL_AUTHOR_PROMPTS + ALL_STYLE_PROMPTS
 
