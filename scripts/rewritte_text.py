@@ -1,8 +1,9 @@
 from datasets import DatasetDict, load_from_disk, concatenate_datasets
 import shutil
-from llm_prompt import REWRITE_TEMPLATE, GemmaGenerator
+from llm_prompt import REWRITE_TEMPLATES, GemmaGenerator
 import argparse
 import os
+import numpy as np
 VARIANT = "7b-it-quant"
 WEIGHTS_DIR = '../checkpoints/7b-it-quant'
 NUM_SAMPLES = 2000
@@ -15,7 +16,7 @@ def parser():
     argparser.add_argument("--top_k", type=int, default=10)
     argparser.add_argument("--seed", type=int, default=42)
     argparser.add_argument("--batch_size", type=int, default=16)
-    argparser.add_argument("--split", type=str, default="train")    
+    argparser.add_argument("--split", type=str, default="train")
     return argparser.parse_args()
     
 
@@ -31,7 +32,9 @@ def main(args):
         raise ValueError(f"Path {save_path} already exists. Please remove it before running this script.")
     
     dd = load_from_disk('../input/templates')
-    dd = dd.map(lambda x: {'input': REWRITE_TEMPLATE.format(**x)}, desc="Rewriting prompts", num_proc=4)
+    dd = dd.map(lambda x: {'input': f"<start_of_turn>user\n{np.random.choice(REWRITE_TEMPLATES).format(**x)}<end_of_turn>\n<start_of_turn>model\n"},
+                desc="Rewriting prompts",
+                num_proc=4)
     generator = GemmaGenerator(VARIANT, WEIGHTS_DIR, {"output_len": args.output_len, "top_k":args.top_k})
     generator.setup()
     dd = dd.shuffle(args.seed)
