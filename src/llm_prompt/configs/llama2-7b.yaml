@@ -3,20 +3,24 @@ model_name: Llama-2-7b-hf
 
 model: 
   pretrained_model_name_or_path: ${model_org}/${model_name}
-  device_map: auto
+  # device_map: auto
+  attn_implementation: flash_attention_2
 
 
 trainer:
   output_dir: ../checkpoints/${model_name}
-  per_device_train_batch_size: 8
-  gradient_accumulation_steps: 8
+  per_device_train_batch_size: 4
+  gradient_accumulation_steps: 32
   save_strategy: steps
   num_train_epochs: 2
+  logging_steps: 5
   save_steps: 200
   save_total_limit: 3
   overwrite_output_dir: True
   dataloader_num_workers: 8
   dataloader_persistent_workers: True
+  report_to: wandb
+  bf16: True
   optim: 'adamw_8bit'
   group_by_length: True
   length_column_name: 'original_length'

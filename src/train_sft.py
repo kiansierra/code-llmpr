@@ -6,6 +6,8 @@ from transformers import (AutoModelForCausalLM, AutoTokenizer,
                           BitsAndBytesConfig, TrainingArguments)
 from trl import DataCollatorForCompletionOnlyLM, SFTTrainer
 from omegaconf import OmegaConf
+import torch
+from accelerate import PartialState
 
 RESPONSE_TEMPLATE = "### Prompt Used: "
 
@@ -19,15 +21,20 @@ def formatting_prompts_func(example):
 @hydra.main(config_path="llm_prompt/configs", config_name="llama2-7b", version_base=None)
 def main(config) -> None:
     dataset_dict = load_from_disk("../input/rewritten")
-    quantization_config = BitsAndBytesConfig(load_in_8bit=True)
-    model = AutoModelForCausalLM.from_pretrained(**config.model, quantization_config=quantization_config)
+    quantization_config = BitsAndBytesConfig(load_in_4bit=True,
+                                             bnb_4bit_compute_dtype=torch.bfloat16)
+    model = AutoModelForCausalLM.from_pretrained(**config.model,
+                                                 device_map={"": PartialState().process_index},
+                                                 quantization_config=quantization_config)
     tokenizer = AutoTokenizer.from_pretrained(config.model.pretrained_model_name_or_path)
     tokenizer.pad_token = tokenizer.eos_token
     
     args = TrainingArguments(**config.trainer)
     lora_config_resolved = OmegaConf.to_container(config.lora, resolve=True)
     lora_config = LoraConfig(**lora_config_resolved)
-    model = prepare_model_for_kbit_training(model)
+    model = prepare_model_for_kbit_training(model,
+                                            use_gradient_checkpointing=True,
+                                            gradient_checkpointing_kwargs={'use_reentrant': False})
     model = get_peft_model(model, lora_config)
     
     collator = DataCollatorForCompletionOnlyLM(RESPONSE_TEMPLATE, tokenizer=tokenizer)
