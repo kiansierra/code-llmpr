@@ -1,12 +1,16 @@
-from datasets import DatasetDict, load_from_disk, concatenate_datasets
-import shutil
+from datasets import DatasetDict, load_from_disk
 from llm_prompt import REWRITE_TEMPLATES, GemmaGenerator
 import argparse
 import os
 import numpy as np
+import wandb
 VARIANT = "7b-it-quant"
 WEIGHTS_DIR = '../checkpoints/7b-it-quant'
-NUM_SAMPLES = 2000
+
+NUM_PROMPTS_PER_TEXT = 4
+INPUT_DATA_DIR = os.environ.get("INPUT_DATA_DIR", "../input")
+INPUT_DATASET_NAME = "templates"
+OUTPUT_DATASET_NAME = "rewritten_texts"
 
 def parser():
     argparser = argparse.ArgumentParser()
@@ -31,7 +35,10 @@ def main(args):
     if os.path.exists(save_path):
         raise ValueError(f"Path {save_path} already exists. Please remove it before running this script.")
     
-    dd = load_from_disk('../input/templates')
+    run = wandb.init(job_type='rewrite_text')
+    artifact = run.use_artifact(f"{INPUT_DATASET_NAME}:latest")
+    datadir = artifact.download(f'./artifacts/{INPUT_DATASET_NAME}')
+    dd = load_from_disk(datadir)
     dd = dd.map(lambda x: {'input': f"<start_of_turn>user\n{np.random.choice(REWRITE_TEMPLATES).format(**x)}<end_of_turn>\n<start_of_turn>model\n"},
                 desc="Rewriting prompts",
                 num_proc=4)
@@ -50,7 +57,11 @@ def main(args):
                               desc=f"Generating rewritten text for {key}")
         dataset_dict[key] = dataset
     dd = DatasetDict(dataset_dict)
-    dd.save_to_disk(f'../input/rewritten_texts/v-{args.version}')
+    dd.save_to_disk(f'{INPUT_DATA_DIR}/{OUTPUT_DATASET_NAME}/v-{args.version}')
+    artifact = wandb.Artifact(OUTPUT_DATASET_NAME, type="dataset")
+    artifact.add_dir(f"{INPUT_DATA_DIR}/{OUTPUT_DATASET_NAME}")
+    run.log_artifact(artifact)
+    run.finish()
     
 if __name__ == "__main__":
     args = parser()
