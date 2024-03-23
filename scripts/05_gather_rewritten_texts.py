@@ -1,3 +1,4 @@
+import argparse
 import os
 from pathlib import Path
 
@@ -13,7 +14,13 @@ INPUT_DATA_DIR = os.environ.get("INPUT_DATA_DIR", "../input")
 INPUT_DATASET_NAME = "labeled_rewritten_texts"
 OUTPUT_DATASET_NAME = "gathered_rewritten_texts"
 
-def main() -> None:
+def parser():
+    argparser = argparse.ArgumentParser()
+    argparser.add_argument("--yes", type=float, default=0.7)
+    argparser.add_argument("--en", type=float, default=0.8)
+    return argparser.parse_args()
+
+def main(args) -> None:
     run = wandb.init(job_type='gather_rewriten_texts')
     artifact = run.use_artifact(f"{INPUT_DATASET_NAME}:latest")
     datadir = artifact.download(f'./artifacts/{INPUT_DATASET_NAME}')
@@ -24,11 +31,18 @@ def main() -> None:
         for key, dataset in loaded_dataset.items():
             dataset_dict[key].append(dataset)
     dataset_dict = {k: concatenate_datasets(v) for k,v in dataset_dict.items()}
-    DatasetDict(dataset_dict).save_to_disk(f"{INPUT_DATA_DIR}/{OUTPUT_DATASET_NAME}")
+    dataset_dict = DatasetDict(dataset_dict)
+    dataset_dict = dataset_dict.filter(lambda x: x['en'] > args.en,
+                        desc=f"Filtering texts with english prob above {args.en}")
+    dataset_dict =  dataset_dict.filter(lambda x: x['yes'] < args.yes,
+                        desc=f"Filtering texts with probability of containing promptin instructions below {args.yes}")
+    
+    dataset_dict.save_to_disk(f"{INPUT_DATA_DIR}/{OUTPUT_DATASET_NAME}")
     artifact = wandb.Artifact(OUTPUT_DATASET_NAME, type="dataset")
     artifact.add_dir(f"{INPUT_DATA_DIR}/{OUTPUT_DATASET_NAME}")
     run.log_artifact(artifact)
     run.finish()
     
 if __name__ == "__main__":
-    main()
+    args = parser()
+    main(args)
