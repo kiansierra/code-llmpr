@@ -35,7 +35,7 @@ def main(args):
     if os.path.exists(save_path):
         raise ValueError(f"Path {save_path} already exists. Please remove it before running this script.")
     
-    run = wandb.init(job_type='rewrite_text')
+    run = wandb.init(job_type='rewrite_text', config=vars(args))
     artifact = run.use_artifact(f"{INPUT_DATASET_NAME}:latest")
     datadir = artifact.download(f'./artifacts/{INPUT_DATASET_NAME}')
     dd = load_from_disk(datadir)
