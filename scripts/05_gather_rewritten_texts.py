@@ -10,7 +10,7 @@ load_dotenv()
 SPLITS = ['train', 'validation', 'test']
 
 INPUT_DATA_DIR = os.environ.get("INPUT_DATA_DIR", "../input")
-INPUT_DATASET_NAME = "rewritten_texts"
+INPUT_DATASET_NAME = "labeled_rewritten_texts"
 OUTPUT_DATASET_NAME = "gathered_rewritten_texts"
 
 def main() -> None:
