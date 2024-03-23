@@ -79,8 +79,8 @@ def main(args) -> None:
     run = wandb.init(job_type='label_rewriten_texts', config=vars(args))
     prefix = f'v-{args.version}'
     artifact = run.use_artifact(f"{INPUT_DATASET_NAME}:latest")
-    datadir = artifact.download(f'./artifacts/{INPUT_DATASET_NAME}/{prefix}', path_prefix=prefix)
-    datasets = load_from_disk(datadir)
+    datadir = artifact.download(f'./artifacts/{INPUT_DATASET_NAME}', path_prefix=prefix)
+    datasets = load_from_disk(f"{datadir}/{prefix}")
     model_ckpt = "papluca/xlm-roberta-base-language-detection"
     tokenizer = AutoTokenizer.from_pretrained(model_ckpt)
     model = AutoModelForSequenceClassification.from_pretrained(model_ckpt).to("cuda")

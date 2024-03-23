@@ -4,7 +4,7 @@ from pathlib import Path
 
 from datasets import DatasetDict, concatenate_datasets, load_from_disk
 from dotenv import load_dotenv
-
+from loguru import logger
 import wandb
 
 load_dotenv()
@@ -21,7 +21,7 @@ def parser():
     return argparser.parse_args()
 
 def main(args) -> None:
-    run = wandb.init(job_type='gather_rewriten_texts')
+    run = wandb.init(job_type='gather_rewriten_texts', config=vars(args))
     artifact = run.use_artifact(f"{INPUT_DATASET_NAME}:latest")
     datadir = artifact.download(f'./artifacts/{INPUT_DATASET_NAME}')
     all_datasets = list(Path(datadir).glob("v-*"))
@@ -36,6 +36,9 @@ def main(args) -> None:
                         desc=f"Filtering texts with english prob above {args.en}")
     dataset_dict =  dataset_dict.filter(lambda x: x['yes'] < args.yes,
                         desc=f"Filtering texts with probability of containing promptin instructions below {args.yes}")
+    
+    for key, dataset in dataset_dict.items():
+        logger.info(f"Dataset {key} has {len(dataset)} samples")
     
     dataset_dict.save_to_disk(f"{INPUT_DATA_DIR}/{OUTPUT_DATASET_NAME}")
     artifact = wandb.Artifact(OUTPUT_DATASET_NAME, type="dataset")

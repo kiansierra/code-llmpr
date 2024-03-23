@@ -20,10 +20,10 @@ INSTRUCTION_PROMPT = "<start_of_turn>user\n{prompt}<end_of_turn>\n<start_of_turn
 def parser():
     argparser = argparse.ArgumentParser()
     argparser.add_argument("--num_samples", type=int, default=2000)
-    argparser.add_argument("--version", type=int, default=1)
+    argparser.add_argument("--version", type=int, required=True)
     argparser.add_argument("--output_len", type=int, default=200)
     argparser.add_argument("--top_k", type=int, default=10)
-    argparser.add_argument("--seed", type=int, default=42)
+    argparser.add_argument("--seed", type=int, default=None)
     argparser.add_argument("--batch_size", type=int, default=16)
     argparser.add_argument("--split", type=str, default="train")
     return argparser.parse_args()
@@ -39,6 +39,9 @@ def main(args):
     save_path = f'../input/rewritten_texts/v-{args.version}'
     if os.path.exists(save_path):
         raise ValueError(f"Path {save_path} already exists. Please remove it before running this script.")
+    
+    if args.seed is not None:
+        args.seed = args.version
     
     run = wandb.init(job_type='rewrite_text', config=vars(args))
     artifact = run.use_artifact(f"{INPUT_DATASET_NAME}:latest")
