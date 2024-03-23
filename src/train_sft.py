@@ -61,6 +61,13 @@ def main(config) -> None:
     )
 
     trainer.train()
+    if state.is_main_process:
+        OmegaConf.save(config, f"{config.trainer.output_dir}/config.yaml")
+        artifact = wandb.Artifact(config.model_name, type="model")
+        artifact.add_dir(config.trainer.output_dir)
+        run.log_artifact(artifact)
+        run.finish()
+    state.wait_for_everyone()
     
 if __name__ == "__main__":
     main() # pylint: disable=no-value-for-parameter
