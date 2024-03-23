@@ -1,8 +1,10 @@
-from pathlib import Path
-from datasets import load_from_disk, concatenate_datasets, DatasetDict
 import os
-import wandb 
+from pathlib import Path
+
+from datasets import DatasetDict, concatenate_datasets, load_from_disk
 from dotenv import load_dotenv
+
+import wandb
 
 load_dotenv()
 SPLITS = ['train', 'validation', 'test']

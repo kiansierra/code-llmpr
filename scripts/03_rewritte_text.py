@@ -1,9 +1,12 @@
-from datasets import DatasetDict, load_from_disk
-from llm_prompt import REWRITE_TEMPLATES, GemmaGenerator
 import argparse
 import os
+
 import numpy as np
+from datasets import DatasetDict, load_from_disk
+
 import wandb
+from llm_prompt import REWRITE_TEMPLATES, GemmaGenerator
+
 VARIANT = "7b-it-quant"
 WEIGHTS_DIR = '../checkpoints/7b-it-quant'
 
@@ -11,6 +14,8 @@ NUM_PROMPTS_PER_TEXT = 4
 INPUT_DATA_DIR = os.environ.get("INPUT_DATA_DIR", "../input")
 INPUT_DATASET_NAME = "templates"
 OUTPUT_DATASET_NAME = "rewritten_texts"
+
+INSTRUCTION_PROMPT = "<start_of_turn>user\n{prompt}<end_of_turn>\n<start_of_turn>model\n"
 
 def parser():
     argparser = argparse.ArgumentParser()
@@ -39,7 +44,7 @@ def main(args):
     artifact = run.use_artifact(f"{INPUT_DATASET_NAME}:latest")
     datadir = artifact.download(f'./artifacts/{INPUT_DATASET_NAME}')
     dd = load_from_disk(datadir)
-    dd = dd.map(lambda x: {'input': f"<start_of_turn>user\n{np.random.choice(REWRITE_TEMPLATES).format(**x)}<end_of_turn>\n<start_of_turn>model\n"},
+    dd = dd.map(lambda x: {'input': INSTRUCTION_PROMPT.format(prompt=np.random.choice(REWRITE_TEMPLATES).format(**x))},
                 desc="Rewriting prompts",
                 num_proc=4)
     generator = GemmaGenerator(VARIANT, WEIGHTS_DIR, {"output_len": args.output_len, "top_k":args.top_k})

@@ -1,6 +1,7 @@
 from typing import List, Optional
-from omegaconf import OmegaConf, DictConfig
+
 from datasets import Dataset, concatenate_datasets, load_dataset
+from omegaconf import DictConfig, OmegaConf
 
 NEW_KEY_COLUMN = "original_text"
 
