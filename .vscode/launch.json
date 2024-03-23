@@ -10,6 +10,15 @@
       "justMyCode": false
     },
     {
+      "name": "Accelerate: Train SFT",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "accelerate.commands.launch",
+      "console": "integratedTerminal",
+      "args": ["src/train_sft.py"],
+      "justMyCode": false
+    },
+    {
       "name": "Rewrite Texts",
       "type": "debugpy",
       "request": "launch",

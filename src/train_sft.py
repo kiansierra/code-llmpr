@@ -8,8 +8,13 @@ from trl import DataCollatorForCompletionOnlyLM, SFTTrainer
 from omegaconf import OmegaConf
 import torch
 from accelerate import PartialState
+from dotenv import load_dotenv
+import wandb 
+
+load_dotenv()
 
 RESPONSE_TEMPLATE = "### Prompt Used: "
+INPUT_DATASET_NAME = "gathered_rewritten_texts"
 
 def formatting_prompts_func(example):
     output_texts = []
@@ -20,14 +25,21 @@ def formatting_prompts_func(example):
 
 @hydra.main(config_path="llm_prompt/configs", config_name="llama2-7b", version_base=None)
 def main(config) -> None:
-    dataset_dict = load_from_disk("../input/rewritten")
+    state = PartialState()
     quantization_config = BitsAndBytesConfig(load_in_4bit=True,
                                              bnb_4bit_compute_dtype=torch.bfloat16)
     model = AutoModelForCausalLM.from_pretrained(**config.model,
-                                                 device_map={"": PartialState().process_index},
+                                                 device_map={"": state.process_index},
                                                  quantization_config=quantization_config)
     tokenizer = AutoTokenizer.from_pretrained(config.model.pretrained_model_name_or_path)
     tokenizer.pad_token = tokenizer.eos_token
+    datadir = f'./artifacts/{INPUT_DATASET_NAME}'
+    if state.is_main_process:
+        run = wandb.init(config=OmegaConf.to_container(config), job_type='train_sft')
+        artifact = run.use_artifact(f"{INPUT_DATASET_NAME}:latest")
+        datadir = artifact.download(datadir)
+    state.wait_for_everyone()
+    dataset_dict = load_from_disk(datadir)
     
     args = TrainingArguments(**config.trainer)
     lora_config_resolved = OmegaConf.to_container(config.lora, resolve=True)
