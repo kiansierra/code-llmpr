@@ -15,7 +15,6 @@ pytest
 python-dotenv
 pytorch_lightning
 scikit-learn>=1.0.0
-segmentation-models-pytorch
 sentence-transformers
 tensorboard
 torch
@@ -28,3 +27,5 @@ timm
 typing_extensions
 wandb
 lightning
+flash-attn
+git+https://github.com/google/gemma_pytorch

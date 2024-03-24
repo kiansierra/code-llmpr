@@ -1,0 +1,3 @@
+dataset_name:  "poem_sentiment"
+key_column: "verse_text"
+splits: ['train', 'validation', 'test']

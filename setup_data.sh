@@ -20,4 +20,8 @@ function download_and_extract_dataset(){
 }
 
 download_and_extract_competiton "llm-prompt-recovery"
-
+download_and_extract_dataset "nbroad" "gemma-rewrite-nbroad"
+download_and_extract_dataset "thedrcat" "llm-prompt-recovery-data"
+download_and_extract_dataset "newtonbaba12345" "llm-prompt-recovery-data-gemini-and-gemma"
+download_and_extract_dataset "dipamc77" "3000-rewritten-texts-prompt-recovery-challenge"
+download_and_extract_dataset "alexxxsem" "llm-recovery"

@@ -7,6 +7,15 @@
       "request": "launch",
       "program": "${file}",
       "console": "integratedTerminal",
+      "justMyCode": false,
+    },
+    {
+      "name": "Accelerate: Train SFT",
+      "type": "debugpy",
+      "request": "launch",
+      "module": "accelerate.commands.launch",
+      "console": "integratedTerminal",
+      "args": ["src/train_sft.py"],
       "justMyCode": false
     },
     {

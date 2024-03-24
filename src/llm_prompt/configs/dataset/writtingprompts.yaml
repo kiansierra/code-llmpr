@@ -1,3 +1,0 @@
-dataset_name:  "euclaise/writingprompts"
-key_column: "story"
-splits: ['train', 'validation', 'test']

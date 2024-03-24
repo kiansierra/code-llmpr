@@ -1,3 +1,0 @@
-dataset_name:  "sujayC66/text_summarization_long_short_text_2000"
-key_column: "summary"
-splits: ['train', 'test']

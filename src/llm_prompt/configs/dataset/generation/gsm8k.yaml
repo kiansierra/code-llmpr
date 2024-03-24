@@ -1,0 +1,4 @@
+dataset_name:  "gsm8k"
+subset: 'main'
+key_column: "question"
+splits: ['train', 'test']
