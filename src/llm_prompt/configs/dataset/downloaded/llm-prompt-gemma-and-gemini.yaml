@@ -1,0 +1,2 @@
+folder: llm-prompt-recovery-data-gemini-and-gemma
+files: [gemma_data_set_prompt_recover_1.csv, gemma_data_set_prompt_recover_2.csv, gemini_data_set_prompt_recover_3.csv]
