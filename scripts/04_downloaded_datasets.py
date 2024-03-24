@@ -1,12 +1,11 @@
 import argparse
 import os
+
 import pandas as pd
-import numpy as np
+from datasets import Dataset
+
 import wandb
-from datasets import DatasetDict, load_from_disk, Dataset
-
-from llm_prompt import REWRITE_TEMPLATES, GemmaGenerator, get_configs
-
+from llm_prompt import get_configs
 
 INPUT_DATA_DIR = os.environ.get("INPUT_DATA_DIR", "../input")
 OUTPUT_DATASET_NAME = "rewritten_texts"

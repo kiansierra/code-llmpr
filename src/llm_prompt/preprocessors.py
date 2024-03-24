@@ -1,12 +1,13 @@
 from typing import Protocol
 
+import einops
 import numpy as np
 import torch
-from transformers import (AutoModelForSequenceClassification, AutoTokenizer,
-                          pipeline)
-import einops
 import torch.nn.functional as F
 from sentence_transformers import SentenceTransformer
+from transformers import (AutoModelForSequenceClassification, AutoTokenizer,
+                          pipeline)
+
 
 class Preprocessor(Protocol):
     

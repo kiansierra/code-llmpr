@@ -2,10 +2,11 @@ import argparse
 import os
 from pathlib import Path
 
-import wandb
 from datasets import DatasetDict, concatenate_datasets, load_from_disk
 from dotenv import load_dotenv
 from loguru import logger
+
+import wandb
 
 load_dotenv()
 SPLITS = ['train', 'validation', 'test']

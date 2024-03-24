@@ -1,15 +1,18 @@
 import argparse
 import os
-from pathlib import Path
-from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
-import torch
-import wandb
-from datasets import DatasetDict, concatenate_datasets, load_from_disk
-from dotenv import load_dotenv
-from loguru import logger
-from omegaconf import OmegaConf
 from itertools import zip_longest
+from pathlib import Path
+
+import torch
+from datasets import load_from_disk
+from dotenv import load_dotenv
+from omegaconf import OmegaConf
+from transformers import (AutoModelForCausalLM, AutoTokenizer,
+                          BitsAndBytesConfig)
+
+import wandb
 from llm_prompt import CosineScorer
+
 load_dotenv()
 SPLITS = ['train', 'validation', 'test']
 

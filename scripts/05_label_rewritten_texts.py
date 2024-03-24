@@ -1,10 +1,10 @@
 import argparse
 import os
 
-import wandb
 from datasets import load_from_disk
 from dotenv import load_dotenv
 
+import wandb
 from llm_prompt import EnglishLabeler, ResponsePollutionLabeler
 
 load_dotenv()

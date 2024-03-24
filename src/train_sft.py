@@ -1,15 +1,16 @@
 
 import hydra
 import torch
-import wandb
 from accelerate import PartialState
 from datasets import load_from_disk
 from dotenv import load_dotenv
-from omegaconf import OmegaConf, DictConfig
+from omegaconf import DictConfig, OmegaConf
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 from transformers import (AutoModelForCausalLM, AutoTokenizer,
                           BitsAndBytesConfig, TrainingArguments)
 from trl import DataCollatorForCompletionOnlyLM, SFTTrainer
+
+import wandb
 
 load_dotenv()
 
