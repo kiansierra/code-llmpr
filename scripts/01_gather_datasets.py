@@ -15,7 +15,7 @@ INPUT_DATA_DIR = os.environ.get("INPUT_DATA_DIR", "../input")
 
 def main() -> None:
     run = wandb.init(job_type='gather_datasets')
-    dataset_configs = get_configs('dataset')
+    dataset_configs = get_configs('dataset/generation')
     dataset_dict = DatasetDict({key: dataset_preprocess(**val) for key, val in dataset_configs.items()})
     dataset_dict = dataset_dict.filter(lambda x: x['original_length'] < MAX_WORDS,
                                        desc=f"Filtering texts with over {MAX_WORDS} words",
