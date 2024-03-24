@@ -4,9 +4,9 @@ import os
 import numpy as np
 import wandb
 from datasets import Dataset, DatasetDict, concatenate_datasets, load_from_disk
-
+import pandas as pd
 from llm_prompt import REWRITE_PROMPTS
-
+from loguru import logger
 SPLITS = ['train', 'validation', 'test']
 
 NUM_PROMPTS_PER_TEXT = 4
@@ -20,13 +20,21 @@ def main() -> None:
     datadir = artifact.download(f'./artifacts/{INPUT_DATASET_NAME}')
     raw_dataset_dict = load_from_disk(datadir)
     dataset_templates = []
-    for dataset in raw_dataset_dict.values():
+    prompts_df = pd.read_csv('prompts.csv')
+    all_rewrite_prompts = REWRITE_PROMPTS + prompts_df['rewrite_prompt'].tolist()
+    logger.info(f"Number of rewrite prompts: {len(all_rewrite_prompts)}")
+    for name, dataset in raw_dataset_dict.items():
+        logger.info(f"Adding prompts to {name}")
+        selected_prompts = np.random.choice(all_rewrite_prompts, (len(dataset) , NUM_PROMPTS_PER_TEXT))
+        dataset = dataset.add_column('rewrite_prompt', selected_prompts.tolist())
         df = dataset.to_pandas()
-        df['rewrite_prompt']  = df.apply(lambda _: np.random.choice(REWRITE_PROMPTS, NUM_PROMPTS_PER_TEXT), axis=1)
         df = df.explode('rewrite_prompt')
+        logger.info(f"Number of examples in {name}: {len(df)}")
         dataset_templates.append(Dataset.from_pandas(df))
     dataset = concatenate_datasets(dataset_templates)
     dataset_dict = {key: dataset.filter(lambda x: x['split'] == key, desc=f"Filtering {key}") for key in SPLITS}
+    for key, dataset in dataset_dict.items():
+        logger.info(f"Number of examples in {key}: {len(dataset)}")
     DatasetDict(dataset_dict).save_to_disk(f"{INPUT_DATA_DIR}/{OUTPUT_DATASET_NAME}")
     artifact = wandb.Artifact(OUTPUT_DATASET_NAME, type="dataset")
     artifact.add_dir(f"{INPUT_DATA_DIR}/{OUTPUT_DATASET_NAME}")

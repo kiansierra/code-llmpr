@@ -1,6 +1,6 @@
 import argparse
 import os
-
+import pandas as pd
 import numpy as np
 import wandb
 from datasets import DatasetDict, load_from_disk
@@ -10,7 +10,6 @@ from llm_prompt import REWRITE_TEMPLATES, GemmaGenerator
 VARIANT = "7b-it-quant"
 WEIGHTS_DIR = '../checkpoints/7b-it-quant'
 
-NUM_PROMPTS_PER_TEXT = 4
 INPUT_DATA_DIR = os.environ.get("INPUT_DATA_DIR", "../input")
 INPUT_DATASET_NAME = "templates"
 OUTPUT_DATASET_NAME = "rewritten_texts"
@@ -42,7 +41,6 @@ def main(args):
     
     if args.seed is not None:
         args.seed = args.version
-    
     run = wandb.init(job_type='rewrite_text', config=vars(args))
     artifact = run.use_artifact(f"{INPUT_DATASET_NAME}:latest")
     datadir = artifact.download(f'./artifacts/{INPUT_DATASET_NAME}')
