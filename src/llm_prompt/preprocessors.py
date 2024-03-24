@@ -1,7 +1,10 @@
 from typing import Protocol
-from transformers import AutoTokenizer, AutoModelForSequenceClassification, pipeline
-import torch
+
 import numpy as np
+import torch
+from transformers import (AutoModelForSequenceClassification, AutoTokenizer,
+                          pipeline)
+
 
 class Preprocessor(Protocol):
     

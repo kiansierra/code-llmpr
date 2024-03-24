@@ -2,9 +2,9 @@ import argparse
 import os
 
 import numpy as np
+import wandb
 from datasets import DatasetDict, load_from_disk
 
-import wandb
 from llm_prompt import REWRITE_TEMPLATES, GemmaGenerator
 
 VARIANT = "7b-it-quant"

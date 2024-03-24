@@ -1,6 +1,7 @@
 
 import hydra
 import torch
+import wandb
 from accelerate import PartialState
 from datasets import load_from_disk
 from dotenv import load_dotenv
@@ -10,8 +11,6 @@ from transformers import (AutoModelForCausalLM, AutoTokenizer,
                           BitsAndBytesConfig, TrainingArguments)
 from trl import DataCollatorForCompletionOnlyLM, SFTTrainer
 
-import wandb
-
 load_dotenv()
 
 RESPONSE_TEMPLATE = "### Prompt Used: "
@@ -20,7 +19,7 @@ INPUT_DATASET_NAME = "gathered_rewritten_texts"
 def formatting_prompts_func(example):
     output_texts = []
     for i in range(len(example['original_text'])):
-        text = f"""### Original Text: {example['original_text'][i]} ### Rewriten Text: {example['rewritten_text'][i]} {RESPONSE_TEMPLATE} {example['rewrite_prompt'][i]}"""
+        text = f"""### Original Text: {example['original_text'][i]} ### Rewriten Text: {example['rewritten_text'][i]} {RESPONSE_TEMPLATE} {example['rewrite_prompt'][i]}""" # noqa: E501
         output_texts.append(text)
     return output_texts
 
