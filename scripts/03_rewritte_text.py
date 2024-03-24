@@ -23,7 +23,7 @@ def parser():
     argparser.add_argument("--output_len", type=int, default=200)
     argparser.add_argument("--top_k", type=int, default=10)
     argparser.add_argument("--seed", type=int, default=None)
-    argparser.add_argument("--batch_size", type=int, default=16)
+    argparser.add_argument("--batch_size", type=int, default=12)
     argparser.add_argument("--split", type=str, default="train")
     return argparser.parse_args()
     

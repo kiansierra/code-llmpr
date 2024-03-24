@@ -17,11 +17,14 @@ OUTPUT_DATASET_NAME = "labeled_rewritten_texts"
 def parser():
     argparser = argparse.ArgumentParser()
     argparser.add_argument("--version", type=int, default=1)
+    argparser.add_argument("--downloaded", action="store_true", default=False)
     return argparser.parse_args()
 
 def main(args) -> None:
     run = wandb.init(job_type='label_rewriten_texts', config=vars(args))
     prefix = f'v-{args.version}'
+    if args.downloaded:
+        prefix = 'v-downloaded'
     artifact = run.use_artifact(f"{INPUT_DATASET_NAME}:latest")
     datadir = artifact.download(f'./artifacts/{INPUT_DATASET_NAME}', path_prefix=prefix)
     datasets = load_from_disk(f"{datadir}/{prefix}")

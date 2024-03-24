@@ -14,6 +14,8 @@ INPUT_DATA_DIR = os.environ.get("INPUT_DATA_DIR", "../input")
 INPUT_DATASET_NAME = "labeled_rewritten_texts"
 OUTPUT_DATASET_NAME = "gathered_rewritten_texts"
 
+KEEP_COLUMNS = ['original_text', 'rewritten_text', 'rewrite_prompt', 'source', 'yes', 'en']
+
 def parser():
     argparser = argparse.ArgumentParser()
     argparser.add_argument("--yes", type=float, default=0.7)
@@ -21,6 +23,7 @@ def parser():
     return argparser.parse_args()
 
 def main(args) -> None:
+    
     run = wandb.init(job_type='gather_rewriten_texts', config=vars(args))
     artifact = run.use_artifact(f"{INPUT_DATASET_NAME}:latest")
     datadir = artifact.download(f'./artifacts/{INPUT_DATASET_NAME}')
@@ -29,6 +32,8 @@ def main(args) -> None:
     for path in all_datasets:
         loaded_dataset = load_from_disk(path)
         for key, dataset in loaded_dataset.items():
+            dataset = dataset.select_columns(KEEP_COLUMNS)
+            dataset.add_column('version', [path.name]*len(dataset))
             dataset_dict[key].append(dataset)
     dataset_dict = {k: concatenate_datasets(v) for k,v in dataset_dict.items()}
     dataset_dict = DatasetDict(dataset_dict)
