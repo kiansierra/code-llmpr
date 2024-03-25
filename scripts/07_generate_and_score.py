@@ -36,31 +36,36 @@ def grouper(iterable, n, fillvalue=None):
 
 def batch_generator(model:AutoModelForCausalLM, tokenizer:PreTrainedTokenizer, **generation_kwargs):
     num_return_sequences = generation_kwargs.get("num_return_sequences", 1)
-    generation_kwargs_add = {
-        k: [v] * num_return_sequences for k, v in generation_kwargs.items() if k not in ["num_return_sequences"]
-    }
     generation_kwargs["pad_token_id"] = tokenizer.eos_token_id
 
     def generate(batch):
         inputs = tokenizer(batch["input"], return_tensors="pt", padding=True).to(model.device)
         outputs = model.generate(**inputs, **generation_kwargs)
+        batch_size = inputs.attention_mask.shape[0]
         end_of_inputs = inputs.attention_mask.shape[1]
         predicted = tokenizer.batch_decode(outputs[:, end_of_inputs:], skip_special_tokens=True)
         predicted = grouper(predicted, num_return_sequences)
+        generation_kwargs_add = {
+            k: [v] * batch_size for k, v in generation_kwargs.items()
+            if k not in ["num_return_sequences", "pad_token_id"]
+        }
         return {"predicted": predicted, **generation_kwargs_add}
 
     return generate
 
 @hydra.main(config_path="../src/llm_prompt/configs/scripts", config_name="07_generate.yaml", version_base=None)
 def main(args) -> None:
-    run = wandb.init(job_type="generate_and_score", config=vars(args))
+    solved_config = OmegaConf.to_container(args, resolve=True)
+    run = wandb.init(job_type="generate_and_score", config=solved_config)
     input_model_name = args.input_model_name
     datadir = f"./artifacts/{input_model_name}"
     artifact = run.use_artifact(f"{input_model_name}:latest")
     model_datadir = artifact.download(datadir)
     config = OmegaConf.load(f"{model_datadir}/config.yaml")
     quantization_config = BitsAndBytesConfig(**config.quantization)
-    model = AutoModelForCausalLM.from_pretrained(**config.model, quantization_config=quantization_config)
+    model = AutoModelForCausalLM.from_pretrained(**config.model,
+                                                 device_map='auto',
+                                                 quantization_config=quantization_config)
     tokenizer = AutoTokenizer.from_pretrained(config.model.pretrained_model_name_or_path)
     tokenizer.pad_token = tokenizer.eos_token
     tokenizer.padding_side = "left"
@@ -75,7 +80,10 @@ def main(args) -> None:
     artifact = run.use_artifact(f"{dataset_name}-{INPUT_DATASET_TYPE}:latest", type=INPUT_DATASET_TYPE)
     datadir = artifact.download(f"./artifacts/{INPUT_DATASET_TYPE}/{dataset_name}")
     dataset = load_from_disk(datadir)
-    dataset = dataset.map(lambda examples: {"input": formatter.format_batch(examples)}, batched=True)
+    dataset = dataset.map(lambda rewritten_text, original_text: 
+            {"input": formatter.format_batch({"rewritten_text":rewritten_text, "original_text": original_text})},
+                          batched=True,
+                          input_columns=['rewritten_text', 'original_text'])
     dataset = dataset.map(
         batch_generator(model, tokenizer, **args.generation_kwargs),
         batched=True,
