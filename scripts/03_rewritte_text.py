@@ -6,7 +6,7 @@ from datasets import DatasetDict, load_from_disk
 from dotenv import load_dotenv
 import hydra
 import wandb
-from llm_prompt import REWRITE_TEMPLATES, APIGenerator, GemmaGenerator
+from llm_prompt import REWRITE_TEMPLATES, APIGenerator, GemmaGenerator, EnglishLabeler
 from omegaconf import OmegaConf
 load_dotenv()
 
@@ -40,6 +40,17 @@ def main(args):
     artifact = run.use_artifact(f"{INPUT_DATASET_NAME}:latest")
     datadir = artifact.download(f"./artifacts/{INPUT_DATASET_NAME}")
     dd = load_from_disk(datadir)
+    dd = dd.shuffle(args.seed)
+    dataset_dict = {}
+    for key, dataset in dd.items():
+        if key not in splits:
+            continue
+        dataset = dataset.select(range(min(args.num_samples, len(dataset))))
+        dataset_dict[key] = dataset
+    dd = DatasetDict(dataset_dict)
+    with EnglishLabeler() as labeler:
+        dd = dd.map(labeler, batched=True, batch_size=64, desc="Labeling English texts")
+    dd = dd.filter(lambda x: x["en"] > args.prob_en, desc=f"Filtering texts with english prob above {args.prob_en}")
     dd = dd.map(
         lambda x: {"input": INSTRUCTION_PROMPT.format(prompt=np.random.choice(REWRITE_TEMPLATES).format(**x))},
         desc="Rewriting prompts",
@@ -50,21 +61,13 @@ def main(args):
     else:
         generator = GemmaGenerator(VARIANT, WEIGHTS_DIR, {"output_len": args.output_len, "top_k": args.top_k})
     generator.setup()
-    dd = dd.shuffle(args.seed)
-    dataset_dict = {}
-    for key, dataset in dd.items():
-        if key not in splits:
-            continue
-        dataset = dataset.select(range(min(args.num_samples, len(dataset))))
-        dataset = dataset.map(
-            generator.generate_batch,
-            batched=True,
-            batch_size=args.batch_size,
-            input_columns=["input"],
-            desc=f"Generating rewritten text for {key}",
-        )
-        dataset_dict[key] = dataset
-    dd = DatasetDict(dataset_dict)
+    dd = dd.map(
+        generator.generate_batch,
+        batched=True,
+        batch_size=args.batch_size,
+        input_columns=["input"],
+        desc="Generating rewritten text",
+    )
     dd = dd.filter(lambda x: x["rewritten_text"] != "EMPTY", desc="Filtering out empty generated texts")
     save_path = f"{INPUT_DATA_DIR}/{OUTPUT_DATASET_TYPE}/{dataset_name}"
     dd.save_to_disk(save_path)
