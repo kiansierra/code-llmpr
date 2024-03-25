@@ -1,0 +1,13 @@
+input_model_name: Llama-2-7b-hf
+version: 4
+seed: Null
+batch_size: 12
+split: train
+downloaded: False
+
+generation_kwargs:
+  top_k: 50
+  top_p: 0.95
+  max_new_tokens: 50
+  temperature: 0.9
+  num_return_sequences: 4
