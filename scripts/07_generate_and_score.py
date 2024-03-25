@@ -1,8 +1,7 @@
-import argparse
 import os
 from itertools import zip_longest
 from pathlib import Path
-
+import numpy as np
 import torch
 from datasets import load_from_disk
 from dotenv import load_dotenv
@@ -13,13 +12,10 @@ import wandb
 from llm_prompt import CosineScorer, FORMATTERS_MAPPING
 
 load_dotenv()
-SPLITS = ["train", "validation", "test"]
 
 INPUT_DATA_DIR = os.environ.get("INPUT_DATA_DIR", "../input")
 INPUT_DATASET_TYPE = "labeled_rewritten_texts"
 OUTPUT_DATASET_TYPE = "generated_and_scored_texts"
-
-KEEP_COLUMNS = ["original_text", "rewritten_text", "rewrite_prompt", "source"]
 
 DTYPE_MAPPING = {
     "fp16": torch.float16,
@@ -94,12 +90,19 @@ def main(args) -> None:
     torch.cuda.empty_cache()
     with CosineScorer() as scorer:
         dataset = dataset.map(scorer, batched=True, batch_size=64, desc="Scoring generated texts")
+        
+    scores = {}
+    for key, data in dataset.items():
+        cosine = np.array(data['cosine'])
+        scores[f'{key}/cosine_avg'] = cosine.mean()
+        scores[f'{key}/cosine_std'] = cosine.std(1).mean()
 
     save_dir = f"{INPUT_DATA_DIR}/{OUTPUT_DATASET_TYPE}/{dataset_name}"
     dataset.save_to_disk(save_dir)
     artifact = wandb.Artifact(f"{dataset_name}-{input_model_name}", type=OUTPUT_DATASET_TYPE)
     artifact.add_dir(save_dir)
     run.log_artifact(artifact)
+    run.log(scores)
     run.finish()
 
 
