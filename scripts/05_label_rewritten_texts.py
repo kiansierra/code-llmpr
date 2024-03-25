@@ -30,8 +30,6 @@ def main(args) -> None:
     artifact = run.use_artifact(f"{prefix}-{INPUT_DATASET_TYPE}:latest", type=INPUT_DATASET_TYPE)
     datadir = artifact.download(f"./artifacts/{INPUT_DATASET_TYPE}/{prefix}")
     datasets = load_from_disk(datadir)
-    with EnglishLabeler() as labeler:
-        datasets = datasets.map(labeler, batched=True, batch_size=64, desc="Labeling English texts")
     with ResponsePollutionLabeler() as labeler:
         datasets = datasets.map(labeler, batched=True, batch_size=64, desc="Labeling Polluted responses")
     save_dir = f"{INPUT_DATA_DIR}/{OUTPUT_DATASET_TYPE}/{prefix}"
