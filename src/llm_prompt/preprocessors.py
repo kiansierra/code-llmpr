@@ -1,7 +1,10 @@
 from typing import Protocol
 
+import einops
 import numpy as np
 import torch
+import torch.nn.functional as F
+from sentence_transformers import SentenceTransformer
 from transformers import (AutoModelForSequenceClassification, AutoTokenizer,
                           pipeline)
 
@@ -9,6 +12,12 @@ from transformers import (AutoModelForSequenceClassification, AutoTokenizer,
 class Preprocessor(Protocol):
     
     def setup(self) -> None:
+        ...
+        
+    def __enter__(self) -> "Preprocessor":
+        ...
+        
+    def __exit__(self, exc_type, exc_value, traceback) -> None:
         ...
         
     def cleanup(self) -> None:
@@ -26,7 +35,7 @@ class EnglishLabeler(Preprocessor):
     def preprocess(self, text: str) -> str:
         return text
     
-    def __enter__(self) -> Preprocessor:
+    def __enter__(self) -> "EnglishLabeler":
         self.setup()
         return self
     
@@ -74,7 +83,7 @@ class ResponsePollutionLabeler(Preprocessor):
         del self.classifier
         torch.cuda.empty_cache()
         
-    def __enter__(self) -> Preprocessor:
+    def __enter__(self) -> "ResponsePollutionLabeler":
         self.setup()
         return self
     
@@ -117,4 +126,44 @@ class ResponsePollutionLabeler(Preprocessor):
                 final_keep_texts.append(batch['rewritten_text'][i])
                 final_prob_yes.append(prob)
         return {'rewritten_text': final_keep_texts, 'yes': final_prob_yes}
+    
+    
+
+
+class CosineScorer(Preprocessor):
+    
+    def setup(self):
+        self.model = SentenceTransformer("sentence-transformers/sentence-t5-base").to('cuda')
+        
+    def cleanup(self):
+        del self.model
+        torch.cuda.empty_cache()
+        
+    def __enter__(self):
+        self.setup()
+        return self
+
+    def __exit__(self, exc_type, exc_value, exc_traceback):
+        self.cleanup()
+        
+    @staticmethod
+    def extend_embeddings(embeddings:torch.Tensor, num_sequences:int) -> torch.Tensor:
+        embeddings = einops.repeat(embeddings, 'n d -> n m d', m=num_sequences)
+        embeddings = einops.rearrange(embeddings, 'n m d -> (n m) d')
+        return embeddings
+        
+    def __call__(self, batch):
+        predicted = []
+        num_sequences = len(batch['predicted'][0])
+        for elem in batch['predicted']:
+            predicted.extend(elem)
+        prompts = batch["rewrite_prompt"]
+        prompts_embeddings = self.model.encode(prompts, convert_to_tensor=True)
+        predicted_embeddings = self.model.encode(predicted, convert_to_tensor=True)
+        prompts_embeddings = self.extend_embeddings(prompts_embeddings, num_sequences)
+        cosine = F.cosine_similarity(predicted_embeddings, prompts_embeddings)
+        cosine_3 = F.cosine_similarity(predicted_embeddings**3, prompts_embeddings**3)
+        cosine = einops.rearrange(cosine, '(a b)-> a b', b=num_sequences)
+        cosine_3 = einops.rearrange(cosine_3, '(a b)-> a b', b=num_sequences)
+        return {'cosine': cosine.tolist(), 'cosine_3': cosine_3.tolist()}
     

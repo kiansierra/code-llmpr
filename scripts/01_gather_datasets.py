@@ -1,9 +1,9 @@
 import os
 
-import wandb
 from datasets import DatasetDict
 from dotenv import load_dotenv
 
+import wandb
 from llm_prompt import dataset_preprocess, get_configs
 
 load_dotenv()

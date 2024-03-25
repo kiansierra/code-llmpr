@@ -1,17 +1,27 @@
 
 import hydra
 import torch
-import wandb
 from accelerate import PartialState
 from datasets import load_from_disk
 from dotenv import load_dotenv
-from omegaconf import OmegaConf
+from omegaconf import DictConfig, OmegaConf
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
 from transformers import (AutoModelForCausalLM, AutoTokenizer,
                           BitsAndBytesConfig, TrainingArguments)
 from trl import DataCollatorForCompletionOnlyLM, SFTTrainer
 
+import wandb
+
 load_dotenv()
+
+DTYPE_MAPPING = {
+    "fp16": torch.float16,
+    "fp32": torch.float32,
+    "bf16": torch.bfloat16,
+
+}
+
+OmegaConf.register_new_resolver("dtype", lambda x: DTYPE_MAPPING[x])
 
 RESPONSE_TEMPLATE = "### Prompt Used: "
 INPUT_DATASET_NAME = "gathered_rewritten_texts"
@@ -24,10 +34,9 @@ def formatting_prompts_func(example):
     return output_texts
 
 @hydra.main(config_path="llm_prompt/configs", config_name="llama2-7b", version_base=None)
-def main(config) -> None:
+def main(config:DictConfig) -> None:
     state = PartialState()
-    quantization_config = BitsAndBytesConfig(load_in_4bit=True,
-                                             bnb_4bit_compute_dtype=torch.bfloat16)
+    quantization_config = BitsAndBytesConfig(**config.quantization)
     model = AutoModelForCausalLM.from_pretrained(**config.model,
                                                  device_map={"": state.process_index},
                                                  quantization_config=quantization_config)

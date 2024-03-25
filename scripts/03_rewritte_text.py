@@ -1,18 +1,20 @@
 import argparse
 import os
-import pandas as pd
+
 import numpy as np
-import wandb
 from datasets import DatasetDict, load_from_disk
 
-from llm_prompt import REWRITE_TEMPLATES, GemmaGenerator
+import wandb
+from llm_prompt import REWRITE_TEMPLATES, GemmaGenerator, APIGenerator
+from dotenv import load_dotenv
+load_dotenv()
 
 VARIANT = "7b-it-quant"
 WEIGHTS_DIR = '../checkpoints/7b-it-quant'
 
 INPUT_DATA_DIR = os.environ.get("INPUT_DATA_DIR", "../input")
 INPUT_DATASET_NAME = "templates"
-OUTPUT_DATASET_NAME = "rewritten_texts"
+OUTPUT_DATASET_TYPE = "rewritten_texts"
 
 INSTRUCTION_PROMPT = "<start_of_turn>user\n{prompt}<end_of_turn>\n<start_of_turn>model\n"
 
@@ -25,6 +27,7 @@ def parser():
     argparser.add_argument("--seed", type=int, default=None)
     argparser.add_argument("--batch_size", type=int, default=12)
     argparser.add_argument("--split", type=str, default="train")
+    argparser.add_argument("--online", action="store_true", default=False)
     return argparser.parse_args()
     
 
@@ -41,6 +44,7 @@ def main(args):
     
     if args.seed is not None:
         args.seed = args.version
+    dataset_name = f"v-{args.version}"
     run = wandb.init(job_type='rewrite_text', config=vars(args))
     artifact = run.use_artifact(f"{INPUT_DATASET_NAME}:latest")
     datadir = artifact.download(f'./artifacts/{INPUT_DATASET_NAME}')
@@ -48,7 +52,10 @@ def main(args):
     dd = dd.map(lambda x: {'input': INSTRUCTION_PROMPT.format(prompt=np.random.choice(REWRITE_TEMPLATES).format(**x))},
                 desc="Rewriting prompts",
                 num_proc=4)
-    generator = GemmaGenerator(VARIANT, WEIGHTS_DIR, {"output_len": args.output_len, "top_k":args.top_k})
+    if args.online:
+        generator = APIGenerator("google/gemma-7b-it")
+    else:
+        generator = GemmaGenerator(VARIANT, WEIGHTS_DIR, {"output_len": args.output_len, "top_k":args.top_k})
     generator.setup()
     dd = dd.shuffle(args.seed)
     dataset_dict = {}
@@ -63,9 +70,11 @@ def main(args):
                               desc=f"Generating rewritten text for {key}")
         dataset_dict[key] = dataset
     dd = DatasetDict(dataset_dict)
-    dd.save_to_disk(f'{INPUT_DATA_DIR}/{OUTPUT_DATASET_NAME}/v-{args.version}')
-    artifact = wandb.Artifact(OUTPUT_DATASET_NAME, type="dataset")
-    artifact.add_dir(f"{INPUT_DATA_DIR}/{OUTPUT_DATASET_NAME}")
+    dd = dd.filter(lambda x: x['rewritten_text'] != "EMPTY", desc="Filtering out empty generated texts")
+    save_path = f'{INPUT_DATA_DIR}/{OUTPUT_DATASET_TYPE}/{dataset_name}'
+    dd.save_to_disk(save_path)
+    artifact = wandb.Artifact(f"{dataset_name}-{OUTPUT_DATASET_TYPE}", type=OUTPUT_DATASET_TYPE)
+    artifact.add_dir(save_path)
     run.log_artifact(artifact)
     run.finish()
     

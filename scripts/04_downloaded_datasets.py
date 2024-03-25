@@ -1,15 +1,14 @@
 import argparse
 import os
+
 import pandas as pd
-import numpy as np
+from datasets import Dataset
+
 import wandb
-from datasets import DatasetDict, load_from_disk, Dataset
-
-from llm_prompt import REWRITE_TEMPLATES, GemmaGenerator, get_configs
-
+from llm_prompt import get_configs
 
 INPUT_DATA_DIR = os.environ.get("INPUT_DATA_DIR", "../input")
-OUTPUT_DATASET_NAME = "rewritten_texts"
+OUTPUT_DATASET_TYPE = "rewritten_texts"
 
 def parser():
     argparser = argparse.ArgumentParser()
@@ -43,9 +42,10 @@ def main(args):
     dd['validation'] = new_dd['test']
     dd['train'] = new_dd['train']
     run = wandb.init(job_type='downloaded_texts', config=vars(args))
-    dd.save_to_disk(f'{INPUT_DATA_DIR}/{OUTPUT_DATASET_NAME}/v-{version}')
-    artifact = wandb.Artifact(OUTPUT_DATASET_NAME, type="dataset")
-    artifact.add_dir(f"{INPUT_DATA_DIR}/{OUTPUT_DATASET_NAME}")
+    dataset_name = f"v-{version}"
+    dd.save_to_disk(f'{INPUT_DATA_DIR}/{OUTPUT_DATASET_TYPE}/{dataset_name}')
+    artifact = wandb.Artifact(f"{dataset_name}-{OUTPUT_DATASET_TYPE}", type=OUTPUT_DATASET_TYPE)
+    artifact.add_dir(f"{INPUT_DATA_DIR}/{OUTPUT_DATASET_TYPE}/{dataset_name}")
     run.log_artifact(artifact)
     run.finish()
     

@@ -1,6 +1,10 @@
 model_org: meta-llama
 model_name: Llama-2-7b-hf
 
+quantization:
+  load_in_4bit: True
+  bnb_4bit_compute_dtype: ${dtype:bf16}
+
 model: 
   pretrained_model_name_or_path: ${model_org}/${model_name}
   # device_map: auto
@@ -19,7 +23,7 @@ trainer:
   evaluation_strategy: steps
   eval_steps: 200
   overwrite_output_dir: True
-  dataloader_num_workers: 8
+  dataloader_num_workers: 4
   dataloader_persistent_workers: True
   report_to: wandb
   bf16: True
@@ -28,7 +32,7 @@ trainer:
   length_column_name: 'original_length'
 
 lora:
-    r: 8
+    r: 16
     lora_alpha: 8
     lora_dropout: 0.1
     target_modules: ["q_proj","k_proj","v_proj","o_proj"]
