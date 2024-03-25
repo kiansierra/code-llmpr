@@ -7,11 +7,14 @@ NEW_KEY_COLUMN = "original_text"
 
 __all__ = ["dataset_preprocess"]
 
-def dataset_preprocess(dataset_name: str,
-                       key_column: str,
-                       subset:Optional[str]=None,
-                       splits:Optional[List[str]] = None,
-                       data_files:Optional[str]= None) -> Dataset:
+
+def dataset_preprocess(
+    dataset_name: str,
+    key_column: str,
+    subset: Optional[str] = None,
+    splits: Optional[List[str]] = None,
+    data_files: Optional[str] = None,
+) -> Dataset:
     splits = splits or ["train"]
     if data_files is None:
         datasets = load_dataset(dataset_name, name=subset)
@@ -26,7 +29,7 @@ def dataset_preprocess(dataset_name: str,
         dataset = datasets[subset]
         dataset = dataset.add_column("source", [dataset_name] * len(dataset))
         dataset = dataset.add_column("split", [subset] * len(dataset))
-        dataset = dataset.map(lambda x: {'original_length': len(x.split(" "))}, input_columns=NEW_KEY_COLUMN)
+        dataset = dataset.map(lambda x: {"original_length": len(x.split(" "))}, input_columns=NEW_KEY_COLUMN)
         dataset_list.append(dataset)
     dataset = concatenate_datasets(dataset_list)
     return dataset
