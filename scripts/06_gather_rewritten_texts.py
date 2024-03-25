@@ -23,7 +23,8 @@ def parser():
     return argparser.parse_args()
 
 
-def main(args) -> None:
+def main() -> None:
+    args = parser()
     run = wandb.init(job_type="gather_rewriten_texts", config=vars(args))
     wandb_api = wandb.Api()
     artifact_collection = wandb_api.artifact_collections("llm-prompt-recovery", INPUT_DATASET_TYPE)
@@ -55,5 +56,4 @@ def main(args) -> None:
 
 
 if __name__ == "__main__":
-    args = parser()
-    main(args)
+    main()

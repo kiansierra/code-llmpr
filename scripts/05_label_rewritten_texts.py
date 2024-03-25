@@ -5,7 +5,7 @@ from datasets import load_from_disk
 from dotenv import load_dotenv
 
 import wandb
-from llm_prompt import EnglishLabeler, ResponsePollutionLabeler
+from llm_prompt import ResponsePollutionLabeler
 
 load_dotenv()
 SPLITS = ["train", "validation", "test"]

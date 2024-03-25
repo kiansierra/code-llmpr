@@ -1,13 +1,14 @@
-import argparse
 import os
 
+import hydra
 import numpy as np
 from datasets import DatasetDict, load_from_disk
 from dotenv import load_dotenv
-import hydra
-import wandb
-from llm_prompt import REWRITE_TEMPLATES, APIGenerator, GemmaGenerator, EnglishLabeler
 from omegaconf import OmegaConf
+
+import wandb
+from llm_prompt import REWRITE_TEMPLATES, APIGenerator, EnglishLabeler, GemmaGenerator
+
 load_dotenv()
 
 VARIANT = "7b-it-quant"
@@ -32,8 +33,10 @@ def main(args):
     if os.path.exists(save_path):
         raise ValueError(f"Path {save_path} already exists. Please remove it before running this script.")
 
+    assert isinstance(args.version, int) or args.version == "downloaded", "Version must be an integer or downloaded"
+
     if args.seed is not None:
-        args.seed = args.version
+        args.seed = args.version if isinstance(args.version, int) else 0
     dataset_name = f"v-{args.version}"
     resolved_config = OmegaConf.to_container(args, resolve=True)
     run = wandb.init(job_type="rewrite_text", config=resolved_config)
@@ -81,4 +84,4 @@ def main(args):
 
 
 if __name__ == "__main__":
-    main() # pylint: disable=no-value-for-parameter
+    main()  # pylint: disable=no-value-for-parameter
