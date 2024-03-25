@@ -8,7 +8,7 @@
       "program": "${file}",
       "console": "integratedTerminal",
       "justMyCode": false,
-      "args": ["--version", "10"]
+      "args": []
     },
     {
       "name": "Accelerate: Train SFT",

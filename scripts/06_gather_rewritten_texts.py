@@ -12,7 +12,7 @@ load_dotenv()
 SPLITS = ['train', 'validation', 'test']
 
 INPUT_DATA_DIR = os.environ.get("INPUT_DATA_DIR", "../input")
-INPUT_DATASET_NAME = "labeled_rewritten_texts"
+INPUT_DATASET_TYPE = "labeled_rewritten_texts"
 OUTPUT_DATASET_NAME = "gathered_rewritten_texts"
 
 KEEP_COLUMNS = ['original_text', 'rewritten_text', 'rewrite_prompt', 'source', 'yes', 'en']
@@ -26,15 +26,17 @@ def parser():
 def main(args) -> None:
     
     run = wandb.init(job_type='gather_rewriten_texts', config=vars(args))
-    artifact = run.use_artifact(f"{INPUT_DATASET_NAME}:latest")
-    datadir = artifact.download(f'./artifacts/{INPUT_DATASET_NAME}')
-    all_datasets = list(Path(datadir).glob("v-*"))
+    wandb_api = wandb.Api()
+    artifact_collection = wandb_api.artifact_collections("llm-prompt-recovery", INPUT_DATASET_TYPE)
     dataset_dict = {k:[] for k in SPLITS}
-    for path in all_datasets:
-        loaded_dataset = load_from_disk(path)
+    for elem in artifact_collection:
+        logger.info(f"Downloading artifact {elem.name}")
+        artifact = run.use_artifact(f"{elem.name}:latest", type=INPUT_DATASET_TYPE)
+        datadir = artifact.download(f'./artifacts/{INPUT_DATASET_TYPE}/{elem.name}')
+        loaded_dataset = load_from_disk(datadir)
         for key, dataset in loaded_dataset.items():
             dataset = dataset.select_columns(KEEP_COLUMNS)
-            dataset.add_column('version', [path.name]*len(dataset))
+            dataset.add_column('version', [elem.name]*len(dataset))
             dataset_dict[key].append(dataset)
     dataset_dict = {k: concatenate_datasets(v) for k,v in dataset_dict.items()}
     dataset_dict = DatasetDict(dataset_dict)

@@ -12,7 +12,7 @@ WEIGHTS_DIR = '../checkpoints/7b-it-quant'
 
 INPUT_DATA_DIR = os.environ.get("INPUT_DATA_DIR", "../input")
 INPUT_DATASET_NAME = "templates"
-OUTPUT_DATASET_NAME = "rewritten_texts"
+OUTPUT_DATASET_TYPE = "rewritten_texts"
 
 INSTRUCTION_PROMPT = "<start_of_turn>user\n{prompt}<end_of_turn>\n<start_of_turn>model\n"
 
@@ -41,6 +41,7 @@ def main(args):
     
     if args.seed is not None:
         args.seed = args.version
+    dataset_name = f"v-{args.version}"
     run = wandb.init(job_type='rewrite_text', config=vars(args))
     artifact = run.use_artifact(f"{INPUT_DATASET_NAME}:latest")
     datadir = artifact.download(f'./artifacts/{INPUT_DATASET_NAME}')
@@ -63,9 +64,10 @@ def main(args):
                               desc=f"Generating rewritten text for {key}")
         dataset_dict[key] = dataset
     dd = DatasetDict(dataset_dict)
-    dd.save_to_disk(f'{INPUT_DATA_DIR}/{OUTPUT_DATASET_NAME}/v-{args.version}')
-    artifact = wandb.Artifact(OUTPUT_DATASET_NAME, type="dataset")
-    artifact.add_dir(f"{INPUT_DATA_DIR}/{OUTPUT_DATASET_NAME}")
+    save_path = f'{INPUT_DATA_DIR}/{OUTPUT_DATASET_TYPE}/{dataset_name}'
+    dd.save_to_disk(save_path)
+    artifact = wandb.Artifact(f"{dataset_name}-{OUTPUT_DATASET_TYPE}", type=OUTPUT_DATASET_TYPE)
+    artifact.add_dir(save_path)
     run.log_artifact(artifact)
     run.finish()
     
