@@ -1,7 +1,7 @@
-model_org: meta-llama
-model_name: Llama-2-7b-hf
+model_org: google
+model_name: gemma-7b-it
 
-formatter: llama
+formatter: gemma-it
 
 quantization:
   load_in_4bit: True

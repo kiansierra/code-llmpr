@@ -1,31 +1,54 @@
-
 __all__ = ["REWRITE_PROMPTS", "REWRITE_TEMPLATES"]
 
-# flake8: noqa 
+# flake8: noqa
 
-AUTHORS = ["Dr. Seuss", "William Shakespeare", "Tupac Shakur", "J.K Rowling", "Stephen King", "JRR Tolkien",
-           "Paulo Coelho", "Taylor Swift", "Shakespeare", "Jane Austen", "Charles Dickens", "Mark Twain",]
+AUTHORS = [
+    "Dr. Seuss",
+    "William Shakespeare",
+    "Tupac Shakur",
+    "J.K Rowling",
+    "Stephen King",
+    "JRR Tolkien",
+    "Paulo Coelho",
+    "Taylor Swift",
+    "Shakespeare",
+    "Jane Austen",
+    "Charles Dickens",
+    "Mark Twain",
+]
 
 STYLES = ["sea shanty", "rap song", "poem", "haiku", "limerick", "sonnet", "ballad", "ode", "epic"]
 
-HISTORICAL_PERIODS = ["Victorian era", "Elizabethan era", "Renaissance", "Medieval", "Ancient Greek", "Ancient Roman",
-                      "Middle Ages", "Enlightenment", "Baroque", "Romantic", "Modernist", "Postmodernist"]
+HISTORICAL_PERIODS = [
+    "Victorian era",
+    "Elizabethan era",
+    "Renaissance",
+    "Medieval",
+    "Ancient Greek",
+    "Ancient Roman",
+    "Middle Ages",
+    "Enlightenment",
+    "Baroque",
+    "Romantic",
+    "Modernist",
+    "Postmodernist",
+]
 
 AUTHOR_PROMPTS = [
     "Rewrite this essay but do it using the writing style of {author}.",
     "Transform this text as if it was written by {author}.",
-    "Imagine {author} was to rewrite this text, what would it be like."
+    "Imagine {author} was to rewrite this text, what would it be like.",
 ]
 
 STYLE_PROMPTS = [
     "Rewrite this text in the style of a {style}.",
     "Transform this in to a {style}.",
-    "How would you rewrite this text in the style of a {style}."
+    "How would you rewrite this text in the style of a {style}.",
 ]
 
 PERIOD_PROMPTS = [
     "Rewrite the text as if it were written during the {period} historical period.",
-    "Transform this text using language and cultural references appropriate to the {period} time period"
+    "Transform this text using language and cultural references appropriate to the {period} time period",
 ]
 
 BASIC_REWRITE_PROMPTS = [
@@ -43,7 +66,7 @@ BASIC_REWRITE_PROMPTS = [
     "Rewrite the text using poetic language, imagery, and metaphors.",
     "Focus on creating a rhythmic flow and evoking emotions through language.",
     "Recast the text using poetic language, metaphors, and imagery to create a rhythmic and evocative piece of writing.",
-    "Rewrite the text as a travelogue, describing experiences, sights, and sounds in vivid detail to transport the reader to different locations."
+    "Rewrite the text as a travelogue, describing experiences, sights, and sounds in vivid detail to transport the reader to different locations.",
 ]
 
 ALL_AUTHOR_PROMPTS = [prompt.format(author=author) for author in AUTHORS for prompt in AUTHOR_PROMPTS]
@@ -52,6 +75,8 @@ ALL_PERIOD_PROMPTS = [prompt.format(period=period) for period in HISTORICAL_PERI
 
 REWRITE_PROMPTS = BASIC_REWRITE_PROMPTS + ALL_AUTHOR_PROMPTS + ALL_STYLE_PROMPTS + ALL_PERIOD_PROMPTS
 
-REWRITE_TEMPLATES = ["{rewrite_prompt} {original_text}",
+REWRITE_TEMPLATES = [
+    "{rewrite_prompt} {original_text}",
     "Given the prompt: {rewrite_prompt}, rewrite the following text: {original_text}",
-    "Given the prompt: {rewrite_prompt}, rewrite the following text, don't mention anything about the task at hand: {original_text}",]
+    "Given the prompt: {rewrite_prompt}, rewrite the following text, don't mention anything about the task at hand: {original_text}",
+]
