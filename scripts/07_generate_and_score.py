@@ -17,6 +17,8 @@ load_dotenv()
 
 INPUT_DATA_DIR = os.environ.get("INPUT_DATA_DIR", "../input")
 INPUT_DATASET_TYPE = "labeled_rewritten_texts"
+INPUT_MODEL_TYPE = "models-sft"
+
 OUTPUT_DATASET_TYPE = "generated_and_scored_texts"
 
 DTYPE_MAPPING = {
@@ -60,7 +62,7 @@ def main(args) -> None:
     run = wandb.init(job_type="generate_and_score", config=solved_config)
     input_model_name = args.input_model_name
     datadir = f"./artifacts/{input_model_name}"
-    artifact = run.use_artifact(f"{input_model_name}:latest")
+    artifact = run.use_artifact(f"{input_model_name}-sft:latest", INPUT_MODEL_TYPE)
     model_datadir = artifact.download(datadir)
     config = OmegaConf.load(f"{model_datadir}/config.yaml")
     quantization_config = BitsAndBytesConfig(**config.quantization)

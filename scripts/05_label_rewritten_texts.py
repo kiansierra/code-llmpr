@@ -22,7 +22,8 @@ def parser():
     return argparser.parse_args()
 
 
-def main(args) -> None:
+def main() -> None:
+    args = parser()
     run = wandb.init(job_type="label_rewriten_texts", config=vars(args))
     prefix = f"v-{args.version}"
     if args.downloaded:
@@ -41,5 +42,4 @@ def main(args) -> None:
 
 
 if __name__ == "__main__":
-    args = parser()
-    main(args)
+    main()

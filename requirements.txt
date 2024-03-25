@@ -12,7 +12,6 @@ peft>=0.10.0
 pydantic
 pytest
 python-dotenv
-pytorch_lightning
 scikit-learn>=1.0.0
 sentence-transformers
 torch

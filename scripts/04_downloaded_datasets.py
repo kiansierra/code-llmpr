@@ -34,7 +34,8 @@ def gather_downloaded_datasets():
     return df
 
 
-def main(args):
+def main():
+    args = parser()
     version = "downloaded"
     df = gather_downloaded_datasets()
     dataset = Dataset.from_pandas(df)
@@ -52,5 +53,4 @@ def main(args):
 
 
 if __name__ == "__main__":
-    args = parser()
-    main(args)
+    main()
