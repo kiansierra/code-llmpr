@@ -5,7 +5,9 @@ import numpy as np
 from datasets import DatasetDict, load_from_disk
 
 import wandb
-from llm_prompt import REWRITE_TEMPLATES, GemmaGenerator
+from llm_prompt import REWRITE_TEMPLATES, GemmaGenerator, APIGenerator
+from dotenv import load_dotenv
+load_dotenv()
 
 VARIANT = "7b-it-quant"
 WEIGHTS_DIR = '../checkpoints/7b-it-quant'
@@ -25,6 +27,7 @@ def parser():
     argparser.add_argument("--seed", type=int, default=None)
     argparser.add_argument("--batch_size", type=int, default=12)
     argparser.add_argument("--split", type=str, default="train")
+    argparser.add_argument("--online", action="store_true", default=False)
     return argparser.parse_args()
     
 
@@ -49,7 +52,10 @@ def main(args):
     dd = dd.map(lambda x: {'input': INSTRUCTION_PROMPT.format(prompt=np.random.choice(REWRITE_TEMPLATES).format(**x))},
                 desc="Rewriting prompts",
                 num_proc=4)
-    generator = GemmaGenerator(VARIANT, WEIGHTS_DIR, {"output_len": args.output_len, "top_k":args.top_k})
+    if args.online:
+        generator = APIGenerator("google/gemma-7b-it")
+    else:
+        generator = GemmaGenerator(VARIANT, WEIGHTS_DIR, {"output_len": args.output_len, "top_k":args.top_k})
     generator.setup()
     dd = dd.shuffle(args.seed)
     dataset_dict = {}
@@ -64,6 +70,7 @@ def main(args):
                               desc=f"Generating rewritten text for {key}")
         dataset_dict[key] = dataset
     dd = DatasetDict(dataset_dict)
+    dd = dd.filter(lambda x: x['rewritten_text'] != "EMPTY", desc="Filtering out empty generated texts")
     save_path = f'{INPUT_DATA_DIR}/{OUTPUT_DATASET_TYPE}/{dataset_name}'
     dd.save_to_disk(save_path)
     artifact = wandb.Artifact(f"{dataset_name}-{OUTPUT_DATASET_TYPE}", type=OUTPUT_DATASET_TYPE)

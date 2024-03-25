@@ -5,8 +5,8 @@ from typing import Protocol
 import torch
 from gemma.config import get_config_for_2b, get_config_for_7b
 from gemma.model import GemmaForCausalLM
-
-__all__ = ["BaseGenerator", "GemmaGenerator"]
+import requests
+__all__ = ["BaseGenerator", "GemmaGenerator", "APIGenerator"]
 
 @contextlib.contextmanager
 def _set_default_tensor_type(dtype: torch.dtype):
@@ -31,7 +31,7 @@ class BaseGenerator(Protocol):
         ...
         
 
-class GemmaGenerator:
+class GemmaGenerator(BaseGenerator):
     
     def __init__(self, variant:str, weights_dir: str, generation_params: dict):
         self.variant = variant
@@ -68,3 +68,41 @@ class GemmaGenerator:
         return outputs
         
     
+class APIGenerator(BaseGenerator):
+    
+    def __init__(self, variant:str, timeout: int = 10):
+        self.variant = variant
+        self.timeout = timeout
+
+        
+    @property
+    def model_id(self):
+        return self.variant
+        
+    
+    def setup(self) -> None:
+        self.endpoint = f"https://api-inference.huggingface.co/models/{self.variant}"
+        api_token = os.environ.get("HF_API_TOKEN", None)
+        if api_token is None:
+            raise ValueError("Please set the HF_API_TOKEN environment variable")
+        self.headers = {"Authorization": f"Bearer {api_token}"}
+    
+    def generate(self, texts: str | list[str]):
+        outputs = []
+        for text in texts:
+            response = requests.post(self.endpoint,
+                                     headers=self.headers,
+                                     json={'inputs': text},
+                                     timeout=self.timeout)
+            if response.status_code != 200:
+                outputs.append("EMPTY")
+                continue
+            generated_text = response.json()[0]['generated_text']
+            generated_text = generated_text.replace(text, '')
+            outputs.append(generated_text)
+        return outputs
+    
+    def generate_batch(self, texts: list[str]):
+        rewritten_texts = self.generate(texts)
+        outputs = {'rewritten_text': rewritten_texts, 'model': [self.model_id]*len(texts)}
+        return outputs
