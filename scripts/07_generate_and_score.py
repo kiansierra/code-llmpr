@@ -76,8 +76,7 @@ def main(args) -> None:
     artifact = run.use_artifact(f"{dataset_name}-{INPUT_DATASET_TYPE}:latest", type=INPUT_DATASET_TYPE)
     datadir = artifact.download(f"./artifacts/{INPUT_DATASET_TYPE}/{dataset_name}")
     dataset = load_from_disk(datadir)
-    dataset = dataset.map(lambda rewritten_text, original_text: 
-            {"input": formatter.format_batch({"rewritten_text":rewritten_text, "original_text": original_text})},
+    dataset = dataset.map(lambda x, y: {"input": formatter.format_batch({"rewritten_text":x, "original_text": y})},
                           batched=True,
                           input_columns=['rewritten_text', 'original_text'])
     dataset = dataset.map(

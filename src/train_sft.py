@@ -24,7 +24,7 @@ INPUT_DATASET_NAME = "gathered_rewritten_texts"
 OmegaConf.register_new_resolver("dtype", lambda x: DTYPE_MAPPING[x])
 
 
-@hydra.main(config_path="llm_prompt/configs", config_name="llama2-7b-chat", version_base=None)
+@hydra.main(config_path="llm_prompt/configs/sft", config_name="llama2-7b-chat", version_base=None)
 def main(config: DictConfig) -> None:
     state = PartialState()
     quantization_config = BitsAndBytesConfig(**config.quantization)
