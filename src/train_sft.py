@@ -9,7 +9,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 from trl import DataCollatorForCompletionOnlyLM, SFTTrainer
 
 import wandb
-from llm_prompt import LlamaFormatter
+from llm_prompt import FORMATTERS_MAPPING
 
 load_dotenv()
 
@@ -24,7 +24,7 @@ INPUT_DATASET_NAME = "gathered_rewritten_texts"
 OmegaConf.register_new_resolver("dtype", lambda x: DTYPE_MAPPING[x])
 
 
-@hydra.main(config_path="llm_prompt/configs", config_name="llama2-7b", version_base=None)
+@hydra.main(config_path="llm_prompt/configs", config_name="llama2-7b-chat", version_base=None)
 def main(config: DictConfig) -> None:
     state = PartialState()
     quantization_config = BitsAndBytesConfig(**config.quantization)
@@ -33,7 +33,7 @@ def main(config: DictConfig) -> None:
     )
     tokenizer = AutoTokenizer.from_pretrained(config.model.pretrained_model_name_or_path)
     tokenizer.pad_token = tokenizer.eos_token
-    formatter = LlamaFormatter(tokenizer)
+    formatter = FORMATTERS_MAPPING[config.formatter](tokenizer)
     datadir = f"./artifacts/{INPUT_DATASET_NAME}"
     if state.is_main_process:
         run = wandb.init(config=OmegaConf.to_container(config), job_type="train_sft")
