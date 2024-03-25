@@ -1,13 +1,14 @@
-import argparse
 import os
 
+import hydra
 import numpy as np
 from datasets import DatasetDict, load_from_disk
 from dotenv import load_dotenv
-import hydra
-import wandb
-from llm_prompt import REWRITE_TEMPLATES, APIGenerator, GemmaGenerator
 from omegaconf import OmegaConf
+
+import wandb
+from llm_prompt import REWRITE_TEMPLATES, APIGenerator, EnglishLabeler, GemmaGenerator
+
 load_dotenv()
 
 VARIANT = "7b-it-quant"
@@ -32,14 +33,30 @@ def main(args):
     if os.path.exists(save_path):
         raise ValueError(f"Path {save_path} already exists. Please remove it before running this script.")
 
+    assert isinstance(args.version, int) or args.version == "downloaded", "Version must be an integer or downloaded"
+
     if args.seed is not None:
-        args.seed = args.version
+        args.seed = args.version if isinstance(args.version, int) else 0
     dataset_name = f"v-{args.version}"
     resolved_config = OmegaConf.to_container(args, resolve=True)
     run = wandb.init(job_type="rewrite_text", config=resolved_config)
     artifact = run.use_artifact(f"{INPUT_DATASET_NAME}:latest")
     datadir = artifact.download(f"./artifacts/{INPUT_DATASET_NAME}")
     dd = load_from_disk(datadir)
+    # Shuffle the dataset and sample for each split
+    dd = dd.shuffle(args.seed)
+    dataset_dict = {}
+    for key, dataset in dd.items():
+        if key not in splits:
+            continue
+        dataset = dataset.select(range(min(args.num_samples, len(dataset))))
+        dataset_dict[key] = dataset
+    dd = DatasetDict(dataset_dict)
+    ## Add probability of english and filter out texts with low probability
+    with EnglishLabeler() as labeler:
+        dd = dd.map(labeler, batched=True, batch_size=64, desc="Labeling English texts")
+    dd = dd.filter(lambda x: x["en"] > args.prob_en, desc=f"Filtering texts with english prob above {args.prob_en}")
+    ## Create the Input for generation
     dd = dd.map(
         lambda x: {"input": INSTRUCTION_PROMPT.format(prompt=np.random.choice(REWRITE_TEMPLATES).format(**x))},
         desc="Rewriting prompts",
@@ -50,21 +67,13 @@ def main(args):
     else:
         generator = GemmaGenerator(VARIANT, WEIGHTS_DIR, {"output_len": args.output_len, "top_k": args.top_k})
     generator.setup()
-    dd = dd.shuffle(args.seed)
-    dataset_dict = {}
-    for key, dataset in dd.items():
-        if key not in splits:
-            continue
-        dataset = dataset.select(range(min(args.num_samples, len(dataset))))
-        dataset = dataset.map(
-            generator.generate_batch,
-            batched=True,
-            batch_size=args.batch_size,
-            input_columns=["input"],
-            desc=f"Generating rewritten text for {key}",
-        )
-        dataset_dict[key] = dataset
-    dd = DatasetDict(dataset_dict)
+    dd = dd.map(
+        generator.generate_batch,
+        batched=True,
+        batch_size=args.batch_size,
+        input_columns=["input"],
+        desc="Generating rewritten text",
+    )
     dd = dd.filter(lambda x: x["rewritten_text"] != "EMPTY", desc="Filtering out empty generated texts")
     save_path = f"{INPUT_DATA_DIR}/{OUTPUT_DATASET_TYPE}/{dataset_name}"
     dd.save_to_disk(save_path)
@@ -75,4 +84,4 @@ def main(args):
 
 
 if __name__ == "__main__":
-    main() # pylint: disable=no-value-for-parameter
+    main()  # pylint: disable=no-value-for-parameter

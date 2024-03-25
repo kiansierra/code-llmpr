@@ -20,11 +20,11 @@ KEEP_COLUMNS = ["original_text", "rewritten_text", "rewrite_prompt", "source", "
 def parser():
     argparser = argparse.ArgumentParser()
     argparser.add_argument("--yes", type=float, default=0.7)
-    argparser.add_argument("--en", type=float, default=0.8)
     return argparser.parse_args()
 
 
-def main(args) -> None:
+def main() -> None:
+    args = parser()
     run = wandb.init(job_type="gather_rewriten_texts", config=vars(args))
     wandb_api = wandb.Api()
     artifact_collection = wandb_api.artifact_collections("llm-prompt-recovery", INPUT_DATASET_TYPE)
@@ -41,9 +41,6 @@ def main(args) -> None:
     dataset_dict = {k: concatenate_datasets(v) for k, v in dataset_dict.items()}
     dataset_dict = DatasetDict(dataset_dict)
     dataset_dict = dataset_dict.filter(
-        lambda x: x["en"] > args.en, desc=f"Filtering texts with english prob above {args.en}"
-    )
-    dataset_dict = dataset_dict.filter(
         lambda x: x["yes"] < args.yes,
         desc=f"Filtering texts with probability of containing promptin instructions below {args.yes}",
     )
@@ -59,5 +56,4 @@ def main(args) -> None:
 
 
 if __name__ == "__main__":
-    args = parser()
-    main(args)
+    main()

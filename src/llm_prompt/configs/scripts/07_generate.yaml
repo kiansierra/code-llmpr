@@ -1,7 +1,7 @@
-input_model_name: Llama-2-7b-hf
-version: 4
+input_model_name: Llama-2-7b-chat-hf
+version: 5
 seed: Null
-batch_size: 12
+batch_size: 2
 split: train
 downloaded: False
 

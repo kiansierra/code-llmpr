@@ -20,11 +20,12 @@ DTYPE_MAPPING = {
 }
 
 INPUT_DATASET_NAME = "gathered_rewritten_texts"
+MODEL_OUTPUT_TYPE = "model-sft"
 
 OmegaConf.register_new_resolver("dtype", lambda x: DTYPE_MAPPING[x])
 
 
-@hydra.main(config_path="llm_prompt/configs", config_name="llama2-7b-chat", version_base=None)
+@hydra.main(config_path="llm_prompt/configs/sft", config_name="llama2-7b-chat", version_base=None)
 def main(config: DictConfig) -> None:
     state = PartialState()
     quantization_config = BitsAndBytesConfig(**config.quantization)
@@ -49,6 +50,11 @@ def main(config: DictConfig) -> None:
         model, use_gradient_checkpointing=True, gradient_checkpointing_kwargs={"use_reentrant": False}
     )
     model = get_peft_model(model, lora_config)
+    dataset_dict = dataset_dict.map(
+        lambda x, y, z: {"input": formatter.format_row(x, y, z)},
+        input_columns=["original_text", "rewritten_text", "rewrite_prompt"],
+    )
+    dataset_dict = dataset_dict.select_columns(["input"])
 
     collator = DataCollatorForCompletionOnlyLM(formatter.response_template, tokenizer=tokenizer)
     trainer = SFTTrainer(
@@ -56,15 +62,16 @@ def main(config: DictConfig) -> None:
         args,
         train_dataset=dataset_dict["train"],
         eval_dataset=dataset_dict["validation"],
-        formatting_func=formatter.format_batch,
+        dataset_text_field="input",
         data_collator=collator,
         max_seq_length=1024,
     )
 
     trainer.train()
     if state.is_main_process:
+        model.save_pretrained(config.trainer.output_dir)
         OmegaConf.save(config, f"{config.trainer.output_dir}/config.yaml")
-        artifact = wandb.Artifact(config.model_name, type="model")
+        artifact = wandb.Artifact(f"{config.model_name}-sft", type=MODEL_OUTPUT_TYPE)
         artifact.add_dir(config.trainer.output_dir)
         run.log_artifact(artifact)
         run.finish()

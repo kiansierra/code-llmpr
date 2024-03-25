@@ -75,7 +75,7 @@ exclude =['.git','__pycache__','docs/source/conf.py','build','dist','tests', '__
 
 [tool.ruff]
 # Enable pycodestyle (`E`) and Pyflakes (`F`) codes by default.
-select = ["E", "F"]
+select = ["E", "F", "C"]
 ignore = []
 
 # Exclude a variety of commonly ignored directories.

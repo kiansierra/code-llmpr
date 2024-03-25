@@ -1,8 +1,9 @@
-num_samples: 2000
-version: 4
+num_samples: 100
+version: 5
 output_len: 200
 top_k: 50
 seed: Null
 batch_size: 12
 split: train
 online: False
+prob_en: 0.8

@@ -1,4 +1,5 @@
 from typing import Dict, Optional, Protocol
+
 import numpy as np
 from transformers import PreTrainedTokenizer
 
@@ -20,16 +21,18 @@ class Formatter(Protocol):
     def input_template(self) -> str:
         ...
 
-QUERY_TEMPLATES= [
-        "Given the original text: {original_text} \n It has been rewritten to: {rewritten_text}. \n Please provide the prompt used to rewrite the text.", # noqa: E501
-        "### Original Text: {original_text} ### Rewriten Text: {rewritten_text}",
-        "Guess what prompt has been used to rewrite the original text: {original_text}\n, Rewritten text: {rewritten_text}",
-    ]
 
-SYSTEM_PROMPTS= [
-        "You are an LLM trying to predict the prompt used to rewrite the text",
-        "You are tasked with predicting the prompt used to rewrite the text",
-    ]
+QUERY_TEMPLATES = [
+    "Given the original text: {original_text} \n It has been rewritten to: {rewritten_text}. \n Please provide the prompt used to rewrite the text.",  # noqa: E501
+    "### Original Text: {original_text} ### Rewriten Text: {rewritten_text}",
+    "Guess what prompt has been used to rewrite the original text: {original_text}\n, Rewritten text: {rewritten_text}",  # noqa: E501
+]
+
+SYSTEM_PROMPTS = [
+    "You are an LLM trying to predict the prompt used to rewrite the text",
+    "You are tasked with predicting the prompt used to rewrite the text",
+]
+
 
 class LlamaFormatter(Formatter):
     response_template = "### Prompt Used: "
@@ -73,12 +76,11 @@ class ChatFormatter(Formatter):
         sys_input = np.random.choice(SYSTEM_PROMPTS)
         rewrite_prompt = rewrite_prompt or ""
         chat = [
-            {'role': 'system', 'content': sys_input},
-            {'role': 'user', 'content': command},
-            {'role': 'assistant', 'content': rewrite_prompt},
-            
+            {"role": "system", "content": sys_input},
+            {"role": "user", "content": command},
+            {"role": "assistant", "content": rewrite_prompt},
         ]
-        output =  tokenizer.apply_chat_template(chat, tokenize=False)
+        output = tokenizer.apply_chat_template(chat, tokenize=False)
         output = output.replace(tokenizer.bos_token, "").replace(tokenizer.eos_token, "")
         return output
 
@@ -102,11 +104,8 @@ class GemmaITFormatter(ChatFormatter):
     response_template = "<start_of_turn>model"
 
 
-
-
-FORMATTERS_MAPPING :Dict[str, type[Formatter]] = {
+FORMATTERS_MAPPING: Dict[str, type[Formatter]] = {
     "llama": LlamaFormatter,
     "gemma-it": GemmaITFormatter,
     "llama-chat": LlamaChatFormatter,
-    
 }

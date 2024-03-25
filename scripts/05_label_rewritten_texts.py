@@ -5,7 +5,7 @@ from datasets import load_from_disk
 from dotenv import load_dotenv
 
 import wandb
-from llm_prompt import EnglishLabeler, ResponsePollutionLabeler
+from llm_prompt import ResponsePollutionLabeler
 
 load_dotenv()
 SPLITS = ["train", "validation", "test"]
@@ -22,7 +22,8 @@ def parser():
     return argparser.parse_args()
 
 
-def main(args) -> None:
+def main() -> None:
+    args = parser()
     run = wandb.init(job_type="label_rewriten_texts", config=vars(args))
     prefix = f"v-{args.version}"
     if args.downloaded:
@@ -30,8 +31,6 @@ def main(args) -> None:
     artifact = run.use_artifact(f"{prefix}-{INPUT_DATASET_TYPE}:latest", type=INPUT_DATASET_TYPE)
     datadir = artifact.download(f"./artifacts/{INPUT_DATASET_TYPE}/{prefix}")
     datasets = load_from_disk(datadir)
-    with EnglishLabeler() as labeler:
-        datasets = datasets.map(labeler, batched=True, batch_size=64, desc="Labeling English texts")
     with ResponsePollutionLabeler() as labeler:
         datasets = datasets.map(labeler, batched=True, batch_size=64, desc="Labeling Polluted responses")
     save_dir = f"{INPUT_DATA_DIR}/{OUTPUT_DATASET_TYPE}/{prefix}"
@@ -43,5 +42,4 @@ def main(args) -> None:
 
 
 if __name__ == "__main__":
-    args = parser()
-    main(args)
+    main()
