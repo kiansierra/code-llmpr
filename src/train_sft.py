@@ -63,6 +63,7 @@ def main(config: DictConfig) -> None:
 
     trainer.train()
     if state.is_main_process:
+        model.save_pretrained(config.trainer.output_dir)
         OmegaConf.save(config, f"{config.trainer.output_dir}/config.yaml")
         artifact = wandb.Artifact(config.model_name, type="model")
         artifact.add_dir(config.trainer.output_dir)
