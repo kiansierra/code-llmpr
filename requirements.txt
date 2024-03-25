@@ -26,5 +26,4 @@ timm
 typing_extensions
 wandb
 lightning
-flash-attn
 git+https://github.com/google/gemma_pytorch
