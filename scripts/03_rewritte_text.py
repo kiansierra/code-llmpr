@@ -40,6 +40,7 @@ def main(args):
     artifact = run.use_artifact(f"{INPUT_DATASET_NAME}:latest")
     datadir = artifact.download(f"./artifacts/{INPUT_DATASET_NAME}")
     dd = load_from_disk(datadir)
+    # Shuffle the dataset and sample for each split
     dd = dd.shuffle(args.seed)
     dataset_dict = {}
     for key, dataset in dd.items():
@@ -48,9 +49,11 @@ def main(args):
         dataset = dataset.select(range(min(args.num_samples, len(dataset))))
         dataset_dict[key] = dataset
     dd = DatasetDict(dataset_dict)
+    ## Add probability of english and filter out texts with low probability
     with EnglishLabeler() as labeler:
         dd = dd.map(labeler, batched=True, batch_size=64, desc="Labeling English texts")
     dd = dd.filter(lambda x: x["en"] > args.prob_en, desc=f"Filtering texts with english prob above {args.prob_en}")
+    ## Create the Input for generation
     dd = dd.map(
         lambda x: {"input": INSTRUCTION_PROMPT.format(prompt=np.random.choice(REWRITE_TEMPLATES).format(**x))},
         desc="Rewriting prompts",
