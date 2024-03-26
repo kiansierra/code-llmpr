@@ -1,1 +1,2 @@
 flash-attn
+git+https://github.com/google/gemma_pytorch

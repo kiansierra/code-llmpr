@@ -1,4 +1,4 @@
-num_samples: 100
+num_samples: 5000
 version: 5
 output_len: 200
 top_k: 50
