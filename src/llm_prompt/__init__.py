@@ -1,3 +1,4 @@
+__version__ = '0.1.0'
 from .configs import *
 from .data import *
 from .formatters import *
