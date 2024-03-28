@@ -65,6 +65,7 @@ class LlamaFormatter(Formatter):
 
 class ChatFormatter(Formatter):
     response_template = None
+    include_system = True
 
     def __init__(self, tokenizer: PreTrainedTokenizer) -> None:
         super().__init__()
@@ -76,10 +77,11 @@ class ChatFormatter(Formatter):
         sys_input = np.random.choice(SYSTEM_PROMPTS)
         rewrite_prompt = rewrite_prompt or ""
         chat = [
-            {"role": "system", "content": sys_input},
+            {"role": "system", "content": sys_input} if self.include_system else None,
             {"role": "user", "content": command},
             {"role": "assistant", "content": rewrite_prompt},
         ]
+        chat = list(filter(bool,chat))
         output = tokenizer.apply_chat_template(chat, tokenize=False)
         output = output.replace(tokenizer.bos_token, "").replace(tokenizer.eos_token, "")
         return output
@@ -98,10 +100,12 @@ class ChatFormatter(Formatter):
 
 class LlamaChatFormatter(ChatFormatter):
     response_template = "[/INST]"
+    include_system = True
 
 
 class GemmaITFormatter(ChatFormatter):
     response_template = "<start_of_turn>model"
+    include_system = False
 
 
 FORMATTERS_MAPPING: Dict[str, type[Formatter]] = {
