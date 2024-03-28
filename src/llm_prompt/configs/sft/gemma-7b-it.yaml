@@ -20,10 +20,10 @@ trainer:
   save_strategy: steps
   num_train_epochs: 2
   logging_steps: 5
-  save_steps: 200
+  save_steps: 30
   save_total_limit: 3
   evaluation_strategy: steps
-  eval_steps: 200
+  eval_steps: 30
   overwrite_output_dir: True
   dataloader_num_workers: 4
   dataloader_persistent_workers: True
