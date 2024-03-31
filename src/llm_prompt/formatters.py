@@ -10,9 +10,6 @@ class Formatter(Protocol):
     def format_row(self, original_text: str, rewritten_text: str, rewrite_prompt: Optional[str]) -> str:
         ...
 
-    def format_batch(self, batch: Dict[str, list[str]]) -> list[str]:
-        ...
-
     @property
     def response_template(self) -> str:
         ...
@@ -51,16 +48,6 @@ class LlamaFormatter(Formatter):
             rewrite_prompt=rewrite_prompt,
         )
 
-    def format_batch(self, batch: Dict[str, list[str]]) -> list[str]:
-        outputs = []
-        num_sequences = len(batch["original_text"])
-        rewrite_prompts = batch.get("rewrite_prompt", [None] * num_sequences)
-        for idx in range(num_sequences):
-            original_text = batch["original_text"][idx]
-            rewritten_text = batch["rewritten_text"][idx]
-            rewrite_prompt = rewrite_prompts[idx]
-            outputs.append(self.format_row(original_text, rewritten_text, rewrite_prompt))
-        return outputs
 
 
 class ChatFormatter(Formatter):
@@ -85,17 +72,6 @@ class ChatFormatter(Formatter):
         output = tokenizer.apply_chat_template(chat, tokenize=False)
         output = output.replace(tokenizer.bos_token, "").replace(tokenizer.eos_token, "")
         return output
-
-    def format_batch(self, batch: Dict[str, list[str]]) -> list[str]:
-        outputs = []
-        num_sequences = len(batch["original_text"])
-        rewrite_prompts = batch.get("rewrite_prompt", [None] * num_sequences)
-        for idx in range(num_sequences):
-            original_text = batch["original_text"][idx]
-            rewritten_text = batch["rewritten_text"][idx]
-            rewrite_prompt = rewrite_prompts[idx]
-            outputs.append(self.format_row(original_text, rewritten_text, rewrite_prompt))
-        return outputs
 
 
 class LlamaChatFormatter(ChatFormatter):
