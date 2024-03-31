@@ -3,7 +3,7 @@ from typing import Dict, Optional, Protocol
 import numpy as np
 from transformers import PreTrainedTokenizer
 
-__all__ = ["Formatter", "LlamaFormatter", "GemmaITFormatter", "FORMATTERS_MAPPING"]
+__all__ = ["Formatter", "BaseFormatter", "GemmaITFormatter", "LlamaChatFormatter", "FORMATTERS_MAPPING"]
 
 
 class Formatter(Protocol):
@@ -32,8 +32,8 @@ SYSTEM_PROMPTS = [
 
 
 class BaseFormatter(Formatter):
-    response_template = "### Prompt Used: "
-    input_template = "{command} {response_template} {rewrite_prompt}"  # noqa: E501
+    response_template = "###Prompt Used"
+    input_template = "{command}\n{response_template}: {rewrite_prompt}"  # noqa: E501
 
     def __init__(self, tokenizer: PreTrainedTokenizer, template_index:Optional[int]= None) -> None:
         super().__init__()
