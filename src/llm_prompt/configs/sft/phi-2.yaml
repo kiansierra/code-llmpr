@@ -1,0 +1,43 @@
+model_org: microsoft
+model_name: phi-2
+
+formatter: gemma-it
+
+quantization:
+  load_in_4bit: True
+  bnb_4bit_compute_dtype: ${dtype:bf16}
+
+model: 
+  pretrained_model_name_or_path: ${model_org}/${model_name}
+  trust_remote_code: True
+  # device_map: auto
+  attn_implementation: flash_attention_2
+
+
+trainer:
+  output_dir: ../checkpoints/sft/${model_name}
+  per_device_train_batch_size: 4
+  gradient_accumulation_steps: 32
+  save_strategy: steps
+  num_train_epochs: 2
+  logging_steps: 5
+  save_steps: 30
+  save_total_limit: 3
+  evaluation_strategy: steps
+  eval_steps: 30
+  overwrite_output_dir: True
+  dataloader_num_workers: 4
+  dataloader_persistent_workers: True
+  report_to: wandb
+  bf16: True
+  optim: 'adamw_8bit'
+  group_by_length: True
+  length_column_name: 'original_length'
+
+lora:
+    r: 16
+    lora_alpha: 8
+    lora_dropout: 0.1
+    target_modules: ["q_proj","k_proj","v_proj","o_proj"]
+    bias: "none"
+    task_type: "CAUSAL_LM"
