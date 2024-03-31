@@ -35,15 +35,19 @@ class LlamaFormatter(Formatter):
     response_template = "### Prompt Used: "
     input_template = "{command} {response_template} {rewrite_prompt}"  # noqa: E501
 
-    def __init__(self, tokenizer: PreTrainedTokenizer) -> None:
+    def __init__(self, tokenizer: PreTrainedTokenizer, template_index:Optional[int]= None) -> None:
         super().__init__()
         self.tokenizer = tokenizer
-
+        self.template_index = template_index
+        
     def format_row(self, original_text: str, rewritten_text: str, rewrite_prompt: Optional[str] = None) -> str:
+        if self.template_index is not None:
+            command = QUERY_TEMPLATES[self.template_index].format(original_text=original_text, rewritten_text=rewritten_text)
+        else:
+            command = np.random.choice(QUERY_TEMPLATES).format(original_text=original_text, rewritten_text=rewritten_text)
         rewrite_prompt = rewrite_prompt or ""
         return self.input_template.format(
-            original_text=original_text,
-            rewritten_text=rewritten_text,
+            command=command,
             response_template=self.response_template,
             rewrite_prompt=rewrite_prompt,
         )
