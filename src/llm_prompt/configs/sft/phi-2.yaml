@@ -1,7 +1,7 @@
 model_org: microsoft
 model_name: phi-2
 
-formatter: gemma-it
+formatter: base
 
 quantization:
   load_in_4bit: True

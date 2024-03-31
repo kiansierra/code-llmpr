@@ -31,7 +31,7 @@ SYSTEM_PROMPTS = [
 ]
 
 
-class LlamaFormatter(Formatter):
+class BaseFormatter(Formatter):
     response_template = "### Prompt Used: "
     input_template = "{command} {response_template} {rewrite_prompt}"  # noqa: E501
 
@@ -89,7 +89,8 @@ class GemmaITFormatter(ChatFormatter):
 
 
 FORMATTERS_MAPPING: Dict[str, type[Formatter]] = {
-    "llama": LlamaFormatter,
+    "llama": BaseFormatter,
+    "base": BaseFormatter,
     "gemma-it": GemmaITFormatter,
     "llama-chat": LlamaChatFormatter,
 }
