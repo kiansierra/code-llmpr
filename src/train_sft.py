@@ -45,8 +45,10 @@ def main(config: DictConfig) -> None:
     dataset_dict = dataset_dict.map(
         lambda x, y, z: {"input": formatter.format_row(x, y, z)},
         input_columns=["original_text", "rewritten_text", "rewrite_prompt"],
+        desc="Formatting Inputs",
     )
     dataset_dict = dataset_dict.select_columns(["input"])
+    dataset_dict = dataset_dict.filter(lambda x: formatter.response_template in x["input"], desc="Filtering Inputs")
 
     collator = DataCollatorForCompletionOnlyLM(formatter.response_template, tokenizer=tokenizer)
     trainer = SFTTrainer(
@@ -56,7 +58,7 @@ def main(config: DictConfig) -> None:
         eval_dataset=dataset_dict["validation"],
         dataset_text_field="input",
         data_collator=collator,
-        max_seq_length=1024,
+        max_seq_length=1536,
     )
 
     trainer.train()
