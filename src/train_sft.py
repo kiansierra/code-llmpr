@@ -13,19 +13,11 @@ from llm_prompt import FORMATTERS_MAPPING
 
 load_dotenv()
 
-DTYPE_MAPPING = {
-    "fp16": torch.float16,
-    "fp32": torch.float32,
-    "bf16": torch.bfloat16,
-}
-
 INPUT_DATASET_NAME = "gathered_rewritten_texts"
 MODEL_OUTPUT_TYPE = "model-sft"
 
-OmegaConf.register_new_resolver("dtype", lambda x: DTYPE_MAPPING[x])
 
-
-@hydra.main(config_path="llm_prompt/configs/sft", config_name="gemma-7b-it", version_base=None)
+@hydra.main(config_path="llm_prompt/configs/sft", config_name="phi-2", version_base=None)
 def main(config: DictConfig) -> None:
     state = PartialState()
     quantization_config = BitsAndBytesConfig(**config.quantization)
