@@ -1,0 +1,3 @@
+dataset_name:  "Skylion007/openwebtext"
+key_column: "text"
+splits: ['train']

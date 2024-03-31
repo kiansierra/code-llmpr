@@ -3,5 +3,5 @@ subset: 'en'
 key_column: "text"
 splits: ['train', 'validation']
 data_files: 
-  train: "en/c4-train.0000*-of-01024.json.gz"
-  validation:  "en/c4-validation.0000*-of-00008.json.gz"
+  train: "en/c4-train.00001-of-01024.json.gz"
+  validation:  "en/c4-validation.00001-of-00008.json.gz"
