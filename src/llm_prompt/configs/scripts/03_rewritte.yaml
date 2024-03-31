@@ -6,4 +6,4 @@ seed: Null
 batch_size: 12
 split: train
 online: False
-prob_en: 0.8
+prob_en: 0.95

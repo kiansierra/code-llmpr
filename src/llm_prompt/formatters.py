@@ -3,14 +3,11 @@ from typing import Dict, Optional, Protocol
 import numpy as np
 from transformers import PreTrainedTokenizer
 
-__all__ = ["Formatter", "LlamaFormatter", "GemmaITFormatter", "FORMATTERS_MAPPING"]
+__all__ = ["Formatter", "BaseFormatter", "GemmaITFormatter", "LlamaChatFormatter", "FORMATTERS_MAPPING"]
 
 
 class Formatter(Protocol):
     def format_row(self, original_text: str, rewritten_text: str, rewrite_prompt: Optional[str]) -> str:
-        ...
-
-    def format_batch(self, batch: Dict[str, list[str]]) -> list[str]:
         ...
 
     @property
@@ -34,33 +31,27 @@ SYSTEM_PROMPTS = [
 ]
 
 
-class LlamaFormatter(Formatter):
-    response_template = "### Prompt Used: "
-    input_template = "{command} {response_template} {rewrite_prompt}"  # noqa: E501
+class BaseFormatter(Formatter):
+    response_template = "###Prompt Used"
+    input_template = "{command}\n{response_template}: {rewrite_prompt}"  # noqa: E501
 
-    def __init__(self, tokenizer: PreTrainedTokenizer) -> None:
+    def __init__(self, tokenizer: PreTrainedTokenizer, template_index:Optional[int]= None) -> None:
         super().__init__()
         self.tokenizer = tokenizer
-
+        self.template_index = template_index
+        
     def format_row(self, original_text: str, rewritten_text: str, rewrite_prompt: Optional[str] = None) -> str:
+        if self.template_index is not None:
+            command = QUERY_TEMPLATES[self.template_index].format(original_text=original_text, rewritten_text=rewritten_text)
+        else:
+            command = np.random.choice(QUERY_TEMPLATES).format(original_text=original_text, rewritten_text=rewritten_text)
         rewrite_prompt = rewrite_prompt or ""
         return self.input_template.format(
-            original_text=original_text,
-            rewritten_text=rewritten_text,
+            command=command,
             response_template=self.response_template,
             rewrite_prompt=rewrite_prompt,
         )
 
-    def format_batch(self, batch: Dict[str, list[str]]) -> list[str]:
-        outputs = []
-        num_sequences = len(batch["original_text"])
-        rewrite_prompts = batch.get("rewrite_prompt", [None] * num_sequences)
-        for idx in range(num_sequences):
-            original_text = batch["original_text"][idx]
-            rewritten_text = batch["rewritten_text"][idx]
-            rewrite_prompt = rewrite_prompts[idx]
-            outputs.append(self.format_row(original_text, rewritten_text, rewrite_prompt))
-        return outputs
 
 
 class ChatFormatter(Formatter):
@@ -86,17 +77,6 @@ class ChatFormatter(Formatter):
         output = output.replace(tokenizer.bos_token, "").replace(tokenizer.eos_token, "")
         return output
 
-    def format_batch(self, batch: Dict[str, list[str]]) -> list[str]:
-        outputs = []
-        num_sequences = len(batch["original_text"])
-        rewrite_prompts = batch.get("rewrite_prompt", [None] * num_sequences)
-        for idx in range(num_sequences):
-            original_text = batch["original_text"][idx]
-            rewritten_text = batch["rewritten_text"][idx]
-            rewrite_prompt = rewrite_prompts[idx]
-            outputs.append(self.format_row(original_text, rewritten_text, rewrite_prompt))
-        return outputs
-
 
 class LlamaChatFormatter(ChatFormatter):
     response_template = "[/INST]"
@@ -109,7 +89,8 @@ class GemmaITFormatter(ChatFormatter):
 
 
 FORMATTERS_MAPPING: Dict[str, type[Formatter]] = {
-    "llama": LlamaFormatter,
+    "llama": BaseFormatter,
+    "base": BaseFormatter,
     "gemma-it": GemmaITFormatter,
     "llama-chat": LlamaChatFormatter,
 }

@@ -14,17 +14,11 @@ from llm_prompt import FORMATTERS_MAPPING
 
 load_dotenv()
 
-DTYPE_MAPPING = {
-    "fp16": torch.float16,
-    "fp32": torch.float32,
-    "bf16": torch.bfloat16,
-}
 
 INPUT_DATASET_TYPE = "generated_and_scored_texts"
 MODEL_INPUT_TYPE = "model-sft"
 MODEL_OUTPUT_TYPE = "model-dpo"
 
-OmegaConf.register_new_resolver("dtype", lambda x: DTYPE_MAPPING[x])
 
 
 def convert_dataset_to_dpo(dataset: Dataset) -> Dataset:

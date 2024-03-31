@@ -17,17 +17,9 @@ load_dotenv()
 
 INPUT_DATA_DIR = os.environ.get("INPUT_DATA_DIR", "../input")
 INPUT_DATASET_TYPE = "labeled_rewritten_texts"
-INPUT_MODEL_TYPE = "models-sft"
+INPUT_MODEL_TYPE = "model-sft"
 
 OUTPUT_DATASET_TYPE = "generated_and_scored_texts"
-
-DTYPE_MAPPING = {
-    "fp16": torch.float16,
-    "fp32": torch.float32,
-    "bf16": torch.bfloat16,
-}
-
-OmegaConf.register_new_resolver("dtype", lambda x: DTYPE_MAPPING[x])
 
 
 def grouper(iterable, n, fillvalue=None):

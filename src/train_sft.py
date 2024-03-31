@@ -13,19 +13,11 @@ from llm_prompt import FORMATTERS_MAPPING
 
 load_dotenv()
 
-DTYPE_MAPPING = {
-    "fp16": torch.float16,
-    "fp32": torch.float32,
-    "bf16": torch.bfloat16,
-}
-
 INPUT_DATASET_NAME = "gathered_rewritten_texts"
 MODEL_OUTPUT_TYPE = "model-sft"
 
-OmegaConf.register_new_resolver("dtype", lambda x: DTYPE_MAPPING[x])
 
-
-@hydra.main(config_path="llm_prompt/configs/sft", config_name="gemma-7b-it", version_base=None)
+@hydra.main(config_path="llm_prompt/configs/sft", config_name="phi-2", version_base=None)
 def main(config: DictConfig) -> None:
     state = PartialState()
     quantization_config = BitsAndBytesConfig(**config.quantization)
@@ -53,8 +45,10 @@ def main(config: DictConfig) -> None:
     dataset_dict = dataset_dict.map(
         lambda x, y, z: {"input": formatter.format_row(x, y, z)},
         input_columns=["original_text", "rewritten_text", "rewrite_prompt"],
+        desc="Formatting Inputs",
     )
     dataset_dict = dataset_dict.select_columns(["input"])
+    dataset_dict = dataset_dict.filter(lambda x: formatter.response_template in x["input"], desc="Filtering Inputs")
 
     collator = DataCollatorForCompletionOnlyLM(formatter.response_template, tokenizer=tokenizer)
     trainer = SFTTrainer(
@@ -64,7 +58,7 @@ def main(config: DictConfig) -> None:
         eval_dataset=dataset_dict["validation"],
         dataset_text_field="input",
         data_collator=collator,
-        max_seq_length=1024,
+        max_seq_length=1536,
     )
 
     trainer.train()
