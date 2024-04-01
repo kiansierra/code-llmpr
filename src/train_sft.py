@@ -1,5 +1,4 @@
 import hydra
-import torch
 from accelerate import PartialState
 from datasets import load_from_disk
 from dotenv import load_dotenv

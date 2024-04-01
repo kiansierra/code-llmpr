@@ -1,6 +1,5 @@
 import hydra
 import numpy as np
-import torch
 from accelerate import PartialState
 from datasets import Dataset, load_from_disk
 from dotenv import load_dotenv
@@ -19,7 +18,6 @@ INPUT_DATASET_TYPE = "dataset"
 INPUT_DATASET_NAME = "gathered_dpo_texts"
 MODEL_INPUT_TYPE = "model-sft"
 MODEL_OUTPUT_TYPE = "model-dpo"
-
 
 
 def convert_dataset_to_dpo(dataset: Dataset) -> Dataset:
@@ -69,7 +67,7 @@ def main(config: DictConfig) -> None:
     )
     model.load_adapter(modeldir, adapter_name="reference")
     args = TrainingArguments(**config.trainer)
-    
+
     def process(row):
         chosen = formatter.format_row(row["original_text"], row["rewritten_text"], row["chosen"])
         rejected = formatter.format_row(row["original_text"], row["rewritten_text"], row["rejected"])
@@ -80,8 +78,6 @@ def main(config: DictConfig) -> None:
     dataset_dict["train"] = dataset_dict["train"].select_columns(["chosen", "rejected", "prompt"])
     dataset_dict["validation"] = dataset_dict["validation"].map(process, num_proc=args.dataloader_num_workers)
     dataset_dict["validation"] = dataset_dict["validation"].select_columns(["chosen", "rejected", "prompt"])
-    
-    
 
     trainer = DPOTrainer(
         model,

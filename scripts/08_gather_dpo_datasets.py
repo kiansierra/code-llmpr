@@ -1,10 +1,10 @@
-import argparse
 import os
 
-from datasets import DatasetDict, concatenate_datasets, load_from_disk, Dataset
+import numpy as np
+from datasets import Dataset, DatasetDict, concatenate_datasets, load_from_disk
 from dotenv import load_dotenv
 from loguru import logger
-import numpy as np
+
 import wandb
 
 load_dotenv()
@@ -14,7 +14,8 @@ INPUT_DATA_DIR = os.environ.get("INPUT_DATA_DIR", "../input")
 INPUT_DATASET_TYPE = "generated_and_scored_texts"
 OUTPUT_DATASET_NAME = "gathered_dpo_texts"
 
-KEEP_COLUMNS = ['id',"original_text", "rewritten_text", "rewrite_prompt", "source", 'chosen', 'rejected', 'version']
+KEEP_COLUMNS = ["id", "original_text", "rewritten_text", "rewrite_prompt", "source", "chosen", "rejected", "version"]
+
 
 def convert_dataset_to_dpo(dataset: Dataset) -> Dataset:
     df = dataset.to_pandas()
