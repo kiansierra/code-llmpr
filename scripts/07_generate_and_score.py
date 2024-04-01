@@ -48,7 +48,7 @@ def batch_generator(model: AutoModelForCausalLM, tokenizer: PreTrainedTokenizer,
     return generate
 
 
-@hydra.main(config_path="../src/llm_prompt/configs/scripts", config_name="07_generate.yaml", version_base=None)
+@hydra.main(config_path="../src/llm_prompt/configs/scripts", config_name="07_generate-gemma.yaml", version_base=None)
 def main(args) -> None:
     solved_config = OmegaConf.to_container(args, resolve=True)
     run = wandb.init(job_type="generate_and_score", config=solved_config)
@@ -62,7 +62,8 @@ def main(args) -> None:
         **config.model, device_map="auto", quantization_config=quantization_config
     )
     tokenizer = AutoTokenizer.from_pretrained(config.model.pretrained_model_name_or_path)
-    tokenizer.pad_token = tokenizer.eos_token
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
     tokenizer.padding_side = "left"
     formatter = FORMATTERS_MAPPING[config.formatter](tokenizer)
 

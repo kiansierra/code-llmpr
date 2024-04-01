@@ -1,0 +1,16 @@
+input_model_name: gemma-2b-it
+version: downloaded
+seed: Null
+batch_size: 2
+split: train
+downloaded: False
+
+generation_kwargs:
+  top_k: 40
+  top_p: 0.8
+  max_new_tokens: 30
+  temperature: 0.75
+  num_return_sequences: 4
+  num_beams: 6
+  do_sample: True
+  use_cache: True
