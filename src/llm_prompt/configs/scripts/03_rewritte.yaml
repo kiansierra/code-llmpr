@@ -1,6 +1,6 @@
-num_samples: 5000
-version: 5
-output_len: 200
+num_samples: 4000
+version: 10
+output_len: 180
 top_k: 50
 seed: Null
 batch_size: 12

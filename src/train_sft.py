@@ -1,5 +1,4 @@
 import hydra
-import torch
 from accelerate import PartialState
 from datasets import load_from_disk
 from dotenv import load_dotenv
@@ -17,7 +16,7 @@ INPUT_DATASET_NAME = "gathered_rewritten_texts"
 MODEL_OUTPUT_TYPE = "model-sft"
 
 
-@hydra.main(config_path="llm_prompt/configs/sft", config_name="phi-2", version_base=None)
+@hydra.main(config_path="llm_prompt/configs/sft", config_name="gemma-2b-it", version_base=None)
 def main(config: DictConfig) -> None:
     state = PartialState()
     quantization_config = BitsAndBytesConfig(**config.quantization)
@@ -25,7 +24,9 @@ def main(config: DictConfig) -> None:
         **config.model, device_map={"": state.process_index}, quantization_config=quantization_config
     )
     tokenizer = AutoTokenizer.from_pretrained(config.model.pretrained_model_name_or_path)
-    tokenizer.pad_token = tokenizer.eos_token
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
+    tokenizer.padding_side = "right"
     formatter = FORMATTERS_MAPPING[config.formatter](tokenizer)
     datadir = f"./artifacts/{INPUT_DATASET_NAME}"
     if state.is_main_process:
@@ -58,7 +59,7 @@ def main(config: DictConfig) -> None:
         eval_dataset=dataset_dict["validation"],
         dataset_text_field="input",
         data_collator=collator,
-        max_seq_length=1536,
+        max_seq_length=1024,
     )
 
     trainer.train()
