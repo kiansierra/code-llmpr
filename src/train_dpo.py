@@ -15,7 +15,8 @@ from llm_prompt import FORMATTERS_MAPPING
 load_dotenv()
 
 
-INPUT_DATASET_TYPE = "generated_and_scored_texts"
+INPUT_DATASET_TYPE = "dataset"
+INPUT_DATASET_NAME = "gathered_dpo_texts"
 MODEL_INPUT_TYPE = "model-sft"
 MODEL_OUTPUT_TYPE = "model-dpo"
 
@@ -33,7 +34,7 @@ def convert_dataset_to_dpo(dataset: Dataset) -> Dataset:
     return Dataset.from_pandas(df)
 
 
-@hydra.main(config_path="llm_prompt/configs/dpo", config_name="llama2-7b-chat-dpo", version_base=None)
+@hydra.main(config_path="llm_prompt/configs/dpo", config_name="gemma-2b-it-dpo", version_base=None)
 def main(config: DictConfig) -> None:
     state = PartialState()
     quantization_config = BitsAndBytesConfig(**config.quantization)
@@ -45,15 +46,15 @@ def main(config: DictConfig) -> None:
     )
     model.config.use_cache = False
     tokenizer = AutoTokenizer.from_pretrained(config.model.pretrained_model_name_or_path)
-    tokenizer.pad_token = tokenizer.eos_token
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token
     formatter = FORMATTERS_MAPPING[config.formatter](tokenizer)
     input_model_name = config.model_name
     datadir = f"./artifacts/{INPUT_DATASET_TYPE}"
     modeldir = f"./artifacts/{input_model_name}"
-    dataset_name = "v-5"
     if state.is_main_process:
         run = wandb.init(config=OmegaConf.to_container(config), job_type="train_dpo")
-        data_artifact = run.use_artifact(f"{dataset_name}-{input_model_name}:latest", type=INPUT_DATASET_TYPE)
+        data_artifact = run.use_artifact(f"{INPUT_DATASET_NAME}:latest", type=INPUT_DATASET_TYPE)
         model_artifact = run.use_artifact(f"{input_model_name}-sft:latest", type=MODEL_INPUT_TYPE)
         datadir = data_artifact.download(datadir)
         modeldir = model_artifact.download(modeldir)
@@ -67,24 +68,27 @@ def main(config: DictConfig) -> None:
         adapter_name="train_adapter",
     )
     model.load_adapter(modeldir, adapter_name="reference")
-
     args = TrainingArguments(**config.trainer)
-
-    dataset_dict["train"] = convert_dataset_to_dpo(dataset_dict["train"])
-
+    
     def process(row):
         chosen = formatter.format_row(row["original_text"], row["rewritten_text"], row["chosen"])
         rejected = formatter.format_row(row["original_text"], row["rewritten_text"], row["rejected"])
         prompt = formatter.format_row(row["original_text"], row["rewritten_text"], None)
         return {"chosen": chosen, "rejected": rejected, "prompt": prompt}
 
-    dataset_dict["train"] = dataset_dict["train"].map(process).select_columns(["chosen", "rejected", "prompt"])
+    dataset_dict["train"] = dataset_dict["train"].map(process, num_proc=args.dataloader_num_workers)
+    dataset_dict["train"] = dataset_dict["train"].select_columns(["chosen", "rejected", "prompt"])
+    dataset_dict["validation"] = dataset_dict["validation"].map(process, num_proc=args.dataloader_num_workers)
+    dataset_dict["validation"] = dataset_dict["validation"].select_columns(["chosen", "rejected", "prompt"])
+    
+    
 
     trainer = DPOTrainer(
         model,
         args=args,
         tokenizer=tokenizer,
         train_dataset=dataset_dict["train"],
+        eval_dataset=dataset_dict["validation"],
         model_adapter_name="train_adapter",
         ref_adapter_name="reference",
     )
