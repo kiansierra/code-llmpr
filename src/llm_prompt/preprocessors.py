@@ -147,8 +147,8 @@ class CosineScorer(Preprocessor):
         for elem in batch["predicted"]:
             predicted.extend(elem)
         prompts = batch["rewrite_prompt"]
-        prompts_embeddings = self.model.encode(prompts, convert_to_tensor=True)
-        predicted_embeddings = self.model.encode(predicted, convert_to_tensor=True)
+        prompts_embeddings = self.model.encode(prompts, convert_to_tensor=True, show_progress_bar=False)
+        predicted_embeddings = self.model.encode(predicted, convert_to_tensor=True, show_progress_bar=False)
         prompts_embeddings = self.extend_embeddings(prompts_embeddings, num_sequences)
         cosine = F.cosine_similarity(predicted_embeddings, prompts_embeddings)
         cosine_3 = F.cosine_similarity(predicted_embeddings**3, prompts_embeddings**3)
