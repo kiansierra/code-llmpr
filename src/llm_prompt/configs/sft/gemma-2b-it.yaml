@@ -10,6 +10,7 @@ quantization:
 
 model: 
   pretrained_model_name_or_path: ${model_org}/${model_name}
+  torch_dtype: ${dtype:bf16}
   # device_map: auto
   attn_implementation: flash_attention_2
 
@@ -23,9 +24,10 @@ trainer:
   num_train_epochs: 1
   logging_steps: 5
   save_steps: 30
-  save_total_limit: 3
+  save_total_limit: 2
   evaluation_strategy: steps
   eval_steps: 30
+  max_steps: -1
   overwrite_output_dir: True
   dataloader_num_workers: 4
   dataloader_persistent_workers: True
@@ -36,8 +38,8 @@ trainer:
   length_column_name: 'original_length'
 
 lora:
-    r: 16
-    lora_alpha: 16
+    r: 32
+    lora_alpha: 32
     lora_dropout: 0.1
     target_modules: ["q_proj", "o_proj", "k_proj", "v_proj", "gate_proj", "up_proj", "down_proj"]
     bias: "none"
