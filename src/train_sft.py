@@ -3,10 +3,10 @@ from accelerate import PartialState
 from datasets import load_from_disk
 from dotenv import load_dotenv
 from omegaconf import DictConfig, OmegaConf
-from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training
-from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig, TrainingArguments
+from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training, PeftMixedModel
+from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig, TrainingArguments, PreTrainedTokenizer
 from trl import DataCollatorForCompletionOnlyLM, SFTTrainer
-
+import torch
 import wandb
 from llm_prompt import FORMATTERS_MAPPING
 
@@ -16,7 +16,7 @@ INPUT_DATASET_NAME = "gathered_rewritten_texts"
 MODEL_OUTPUT_TYPE = "model-sft"
 
 
-@hydra.main(config_path="llm_prompt/configs/sft", config_name="llama2-7b-chat", version_base=None)
+@hydra.main(config_path="llm_prompt/configs/sft", config_name="gemma-2b-it", version_base=None)
 def main(config: DictConfig) -> None:
     state = PartialState()
     quantization_config = BitsAndBytesConfig(**config.quantization)
@@ -67,9 +67,13 @@ def main(config: DictConfig) -> None:
     trainer.train()
     if state.is_main_process:
         tokenizer.save_pretrained(config.trainer.output_dir)
-        model.save_pretrained(config.trainer.output_dir)
-        merged_model = model.merge_and_unload()
-        merged_model.save_pretrained(args.output_dir, safe_serialization=True, max_shard_size="3GB")
+        model.save_pretrained(f"{config.trainer.output_dir}/last")
+        del model
+        torch.cuda.empty_cache()
+        model = AutoModelForCausalLM.from_pretrained(**config.model, device_map={"": state.process_index})
+        lora_model = PeftMixedModel.from_pretrained(model, f"{config.trainer.output_dir}/last")
+        merged_model = lora_model.merge_and_unload()
+        merged_model.save_pretrained(config.trainer.output_dir, safe_serialization=True, max_shard_size="4GB")
         OmegaConf.save(config, f"{config.trainer.output_dir}/config.yaml")
         artifact = wandb.Artifact(f"{config.model_name}-sft", type=MODEL_OUTPUT_TYPE)
         artifact.add_dir(config.trainer.output_dir)
