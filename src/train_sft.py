@@ -16,7 +16,7 @@ INPUT_DATASET_NAME = "gathered_rewritten_texts"
 MODEL_OUTPUT_TYPE = "model-sft"
 
 
-@hydra.main(config_path="llm_prompt/configs/sft", config_name="gemma-2b-it", version_base=None)
+@hydra.main(config_path="llm_prompt/configs/sft", config_name="llama2-7b-chat", version_base=None)
 def main(config: DictConfig) -> None:
     state = PartialState()
     quantization_config = BitsAndBytesConfig(**config.quantization)
@@ -30,7 +30,9 @@ def main(config: DictConfig) -> None:
     formatter = FORMATTERS_MAPPING[config.formatter](tokenizer)
     datadir = f"./artifacts/{INPUT_DATASET_NAME}"
     if state.is_main_process:
-        run = wandb.init(config=OmegaConf.to_container(config), job_type="train_sft")
+        run = wandb.init(config=OmegaConf.to_container(config),
+                         job_type="train_sft",
+                         tags=[config.model_name])
         artifact = run.use_artifact(f"{INPUT_DATASET_NAME}:latest")
         datadir = artifact.download(datadir)
     state.wait_for_everyone()
@@ -64,7 +66,10 @@ def main(config: DictConfig) -> None:
 
     trainer.train()
     if state.is_main_process:
+        tokenizer.save_pretrained(config.trainer.output_dir)
         model.save_pretrained(config.trainer.output_dir)
+        merged_model = model.merge_and_unload()
+        merged_model.save_pretrained(args.output_dir, safe_serialization=True, max_shard_size="3GB")
         OmegaConf.save(config, f"{config.trainer.output_dir}/config.yaml")
         artifact = wandb.Artifact(f"{config.model_name}-sft", type=MODEL_OUTPUT_TYPE)
         artifact.add_dir(config.trainer.output_dir)

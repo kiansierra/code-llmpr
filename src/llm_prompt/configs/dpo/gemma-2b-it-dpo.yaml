@@ -30,6 +30,7 @@ trainer:
   dataloader_persistent_workers: True
   report_to: wandb
   bf16: True
+  tf32: True
   optim: 'adamw_8bit'
 
 lora:
