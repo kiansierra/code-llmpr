@@ -4,7 +4,7 @@ from datasets import load_from_disk
 from dotenv import load_dotenv
 from omegaconf import DictConfig, OmegaConf
 from peft import LoraConfig, get_peft_model, prepare_model_for_kbit_training, PeftMixedModel
-from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig, TrainingArguments, PreTrainedTokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig, TrainingArguments
 from trl import DataCollatorForCompletionOnlyLM, SFTTrainer
 import torch
 import wandb
@@ -16,7 +16,7 @@ INPUT_DATASET_NAME = "gathered_rewritten_texts"
 MODEL_OUTPUT_TYPE = "model-sft"
 
 
-@hydra.main(config_path="llm_prompt/configs/sft", config_name="gemma-2b-it", version_base=None)
+@hydra.main(config_path="llm_prompt/configs/sft", config_name="mistral-7b-it-v2", version_base=None)
 def main(config: DictConfig) -> None:
     state = PartialState()
     quantization_config = BitsAndBytesConfig(**config.quantization)
@@ -26,7 +26,7 @@ def main(config: DictConfig) -> None:
     tokenizer = AutoTokenizer.from_pretrained(config.model.pretrained_model_name_or_path)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
-    tokenizer.padding_side = "right"
+    tokenizer.padding_side = "left"
     formatter = FORMATTERS_MAPPING[config.formatter](tokenizer)
     datadir = f"./artifacts/{INPUT_DATASET_NAME}"
     if state.is_main_process:
