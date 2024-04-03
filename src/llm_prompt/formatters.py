@@ -85,6 +85,10 @@ class LlamaChatFormatter(ChatFormatter):
     response_template = "[/INST]"
     include_system = True
 
+class MistralChatFormatter(ChatFormatter):
+    response_template = "[/INST]"
+    include_system = False
+
 
 class GemmaITFormatter(ChatFormatter):
     response_template = "<start_of_turn>model"
@@ -95,5 +99,6 @@ FORMATTERS_MAPPING: Dict[str, type[Formatter]] = {
     "llama": BaseFormatter,
     "base": BaseFormatter,
     "gemma-it": GemmaITFormatter,
+    "mistral-it": MistralChatFormatter,
     "llama-chat": LlamaChatFormatter,
 }

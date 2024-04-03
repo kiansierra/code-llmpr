@@ -9,6 +9,7 @@ quantization:
 
 model: 
   pretrained_model_name_or_path: ${model_org}/${model_name}
+  torch_dtype: ${dtype:bf16}
   # device_map: auto
   attn_implementation: flash_attention_2
 
