@@ -1,10 +1,12 @@
-model_org: meta-llama
-model_name: Llama-2-7b-chat-hf
+model_org: mistralai
+model_name: Mistral-7B-Instruct-v0.2
+output_folder_name: mistral-7b-it-v2
 
-formatter: llama-chat
+formatter: mistral-it
 
 quantization:
   load_in_4bit: True
+  bnb_4bit_quant_type: "nf4"
   bnb_4bit_compute_dtype: ${dtype:bf16}
 
 model: 
@@ -15,29 +17,31 @@ model:
 
 
 trainer:
-  output_dir: ../checkpoints/sft/${model_name}
+  output_dir: ../checkpoints/sft/${output_folder_name}
   per_device_train_batch_size: 4
-  gradient_accumulation_steps: 32
+  gradient_accumulation_steps: 64
+  learning_rate: 2e-4
   save_strategy: steps
-  num_train_epochs: 3
+  num_train_epochs: 2
   logging_steps: 5
   save_steps: 30
-  save_total_limit: 3
+  save_total_limit: 2
   evaluation_strategy: steps
   eval_steps: 30
+  max_steps: -1
   overwrite_output_dir: True
   dataloader_num_workers: 4
   dataloader_persistent_workers: True
   report_to: wandb
   bf16: True
-  optim: 'adamw_8bit'
+  optim: 'paged_adamw_8bit'
   group_by_length: True
   length_column_name: 'original_length'
 
 lora:
-    r: 16
-    lora_alpha: 8
+    r: 32
+    lora_alpha: 32
     lora_dropout: 0.1
-    target_modules: ["q_proj","k_proj","v_proj","o_proj"]
+    target_modules: ["q_proj", "o_proj", "k_proj", "v_proj", "gate_proj", "up_proj", "down_proj"]
     bias: "none"
     task_type: "CAUSAL_LM"
