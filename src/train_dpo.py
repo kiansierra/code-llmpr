@@ -5,7 +5,8 @@ from datasets import Dataset, load_from_disk
 from dotenv import load_dotenv
 from omegaconf import DictConfig, OmegaConf
 from peft import PeftModel, prepare_model_for_kbit_training
-from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig, TrainingArguments
+from transformers import (AutoModelForCausalLM, AutoTokenizer,
+                          BitsAndBytesConfig, TrainingArguments)
 from trl import DPOTrainer
 
 import wandb

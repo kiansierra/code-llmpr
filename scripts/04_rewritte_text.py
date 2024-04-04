@@ -7,7 +7,8 @@ from dotenv import load_dotenv
 from omegaconf import OmegaConf
 
 import wandb
-from llm_prompt import REWRITE_TEMPLATES, APIGenerator, EnglishLabeler, GemmaGenerator
+from llm_prompt import (REWRITE_TEMPLATES, APIGenerator, EnglishLabeler,
+                        GemmaGenerator)
 
 load_dotenv()
 

@@ -5,7 +5,8 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from sentence_transformers import SentenceTransformer
-from transformers import AutoModelForSequenceClassification, AutoTokenizer, pipeline
+from transformers import (AutoModelForSequenceClassification, AutoTokenizer,
+                          pipeline)
 
 
 class Preprocessor(Protocol):

@@ -1,9 +1,10 @@
 import argparse
 import os
 
+import numpy as np
 import pandas as pd
 from datasets import Dataset, DatasetDict
-import numpy as np
+
 import wandb
 from llm_prompt import get_configs
 
