@@ -4,10 +4,8 @@ from accelerate import PartialState
 from datasets import load_from_disk
 from dotenv import load_dotenv
 from omegaconf import DictConfig, OmegaConf
-from peft import (LoraConfig, PeftMixedModel, get_peft_model,
-                  prepare_model_for_kbit_training)
-from transformers import (AutoModelForCausalLM, AutoTokenizer,
-                          BitsAndBytesConfig, TrainingArguments)
+from peft import LoraConfig, PeftMixedModel, get_peft_model, prepare_model_for_kbit_training
+from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig, TrainingArguments
 from trl import DataCollatorForCompletionOnlyLM, SFTTrainer
 
 import wandb
@@ -33,9 +31,7 @@ def main(config: DictConfig) -> None:
     formatter = FORMATTERS_MAPPING[config.formatter](tokenizer)
     datadir = f"./artifacts/{INPUT_DATASET_NAME}"
     if state.is_main_process:
-        run = wandb.init(config=OmegaConf.to_container(config),
-                         job_type="train_sft",
-                         tags=[config.model_name])
+        run = wandb.init(config=OmegaConf.to_container(config), job_type="train_sft", tags=[config.model_name])
         artifact = run.use_artifact(f"{INPUT_DATASET_NAME}:latest")
         datadir = artifact.download(datadir)
     state.wait_for_everyone()

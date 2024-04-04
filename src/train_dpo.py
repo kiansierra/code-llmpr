@@ -5,8 +5,7 @@ from datasets import Dataset, load_from_disk
 from dotenv import load_dotenv
 from omegaconf import DictConfig, OmegaConf
 from peft import PeftModel, prepare_model_for_kbit_training
-from transformers import (AutoModelForCausalLM, AutoTokenizer,
-                          BitsAndBytesConfig, TrainingArguments)
+from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig, TrainingArguments
 from trl import DPOTrainer
 
 import wandb
@@ -47,8 +46,8 @@ def main(config: DictConfig) -> None:
     tokenizer = AutoTokenizer.from_pretrained(config.model.pretrained_model_name_or_path)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
-    tokenizer.padding_side = 'left' # to prevent errors with FA
-    tokenizer.truncation_side = 'left' # to prevent cutting off last generation
+    tokenizer.padding_side = "left"  # to prevent errors with FA
+    tokenizer.truncation_side = "left"  # to prevent cutting off last generation
     formatter = FORMATTERS_MAPPING[config.formatter](tokenizer)
     input_model_name = config.model_name
     datadir = f"./artifacts/{INPUT_DATASET_TYPE}"

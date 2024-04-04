@@ -85,6 +85,7 @@ class LlamaChatFormatter(ChatFormatter):
     response_template = "[/INST]"
     include_system = True
 
+
 class MistralChatFormatter(ChatFormatter):
     response_template = "[/INST]"
     include_system = False
