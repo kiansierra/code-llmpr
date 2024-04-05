@@ -42,7 +42,7 @@ def main():
     version = "downloaded"
     df = gather_downloaded_datasets(args.seed)
     dataset = Dataset.from_pandas(df)
-    dataset_dict = DatasetDict({key: dataset.filter(lambda x: x["split"] == key).select_columns(KEEP_COLUMNS) 
+    dataset_dict = DatasetDict({key: dataset.filter(lambda x: x["split"] == key).select_columns(KEEP_COLUMNS)
                                 for key in ["train", "validation", "test"]})
     run = wandb.init(job_type="downloaded_texts", config=vars(args))
     dataset_name = f"v-{version}"
@@ -50,20 +50,6 @@ def main():
     artifact = wandb.Artifact(f"{dataset_name}-{OUTPUT_DATASET_TYPE}", type=OUTPUT_DATASET_TYPE)
     artifact.add_dir(f"{INPUT_DATA_DIR}/{OUTPUT_DATASET_TYPE}/{dataset_name}")
     run.log_artifact(artifact)
-    prompt_df = df[['source', 'rewrite_prompt']].drop_duplicates().reset_index(drop=True)
-    all_custom_prompts_df = []
-    for key, prompts in REWRITE_PROMPTS.items():
-        custom_prompt_df = pd.DataFrame({"rewrite_prompt": prompts})
-        custom_prompt_df['source'] = key
-        all_custom_prompts_df.append(custom_prompt_df)
-    all_custom_prompts_df = pd.concat(all_custom_prompts_df, ignore_index=True)
-    prompt_df = pd.concat([prompt_df, all_custom_prompts_df], ignore_index=True).drop_duplicates().reset_index(drop=True)
-    prompt_df.to_parquet(f"{INPUT_DATA_DIR}/prompts.parquet")
-    prompt_artifact = wandb.Artifact("prompts", type="dataset")
-    prompt_table = wandb.Table(dataframe=prompt_df)
-    prompt_artifact.add_file(f"{INPUT_DATA_DIR}/prompts.parquet")
-    prompt_artifact.add(prompt_table, "prompts")
-    run.log_artifact(prompt_artifact)
     run.finish()
 
 
