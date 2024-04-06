@@ -61,16 +61,21 @@ def main(args):
     ## Add probability of english and filter out texts with low probability
     with EnglishLabeler() as labeler:
         dd = dd.map(labeler, batched=True, batch_size=64, desc="Labeling English texts")
-    dd = dd.filter(lambda x: x["en"] > args.prob_en, desc=f"Filtering texts with english prob above {args.prob_en}")
+    dd = dd.filter(lambda x: x["en"] > args.prob_en,
+                   desc=f"Filtering texts with english prob above {args.prob_en}",
+                   num_proc=args.num_proc,)
     ## Add probability of different classes and filter out texts with low probability
     with TextLabeler() as labeler:
         dd = dd.map(labeler, batched=True, batch_size=64, desc="Labeling Texts Classes")
-    dd = dd.filter(lambda x: x["most_likely_label"] in args.labels, desc=f"Filtering texts with english prob above {args.labels}")
+    dd = dd.filter(lambda x: x["most_likely_label"] in args.labels,
+                   desc=f"Filtering texts with english prob above {args.labels}",
+                   num_proc=args.num_proc,
+                   )
 
     ## Create the Input for generation
     dd = dd.map(generate_inputs,
         desc="Rewriting prompts",
-        num_proc=4,
+        num_proc=args.num_proc,
     )
     generator = GemmaGenerator(VARIANT, WEIGHTS_DIR, {"output_len": args.output_len, "top_k": args.top_k})
     generator.setup()
