@@ -1,9 +1,10 @@
-from typing import Dict, Optional, Protocol
-
+from typing import Dict, List, Optional, Protocol
+import copy
 import numpy as np
 from transformers import PreTrainedTokenizer
 
-__all__ = ["Formatter", "BaseFormatter", "GemmaITFormatter", "LlamaChatFormatter", "FORMATTERS_MAPPING"]
+__all__ = ["Formatter", "BaseFormatter", "GemmaITFormatter", "LlamaChatFormatter",
+           "FORMATTERS_MAPPING", "MessageStackFormatter", "MistralChatMessageStackFormatter", 'MESSAGE_STACK']
 
 
 class Formatter(Protocol):
@@ -55,7 +56,61 @@ class BaseFormatter(Formatter):
             response_template=self.response_template,
             rewrite_prompt=rewrite_prompt,
         )
+        
+MESSAGE_STACK = [{'original_text': "William Fletcher (c. 1775–1839), Lord Byron's valet, was often the butt of humour by his famous master.",
+  'rewritten_text': "\nIn the annals of time, when tales danced upon the wind, a prophecy foretold of a servant's soul stained with the laughter of a master's jest, a tale etched upon the pages of history. In the realm of whispers and secrets, the name of William Fletcher resonated through the halls of fate, a servant etched upon the hearts of all, the object of both humor and admiration.",
+  'rewrite_prompt': 'Transform the text into an ancient prophecy.'},
+ {'original_text': 'The Nasura Pillar Site, registered as GcJh3 and also known as Namoratunga II, is an archaeological site on the west side of Lake Turkana in Kenya dating to the Pastoral Neolithic. Namoratunga means "people of stone" in the Turkana language. The site was originally believed to have been created around 300 BC, but recent excavations have yielded an older radiocarbon sample dating to 2398 +/- 44 years BC.',
+  'rewritten_text': '\nThe sun shone brightly upon the radiant soil of the Nasura Pillar Site, GcJh3 AKA Namoratunga II, a testament to the enduring spirit of the Pastoral Neolithic that once flourished at this ancient oasis. Towering pillars of stone pierced the sky, whispering tales of a distant era when the world stood on the cusp of change.\n\nThe wind whipped through the air, carrying with it the scent of earth and the echoes of the past',
+  'rewrite_prompt': 'Style it as a day in the life of a superhero.'}]
+        
+        
+class MessageStackFormatter(Formatter):
+    start_response = "Prompt Used:"
+    orig_prefix = "Original Text:"
+    rewrite_prefix = "Re-written Text:"
+    llm_response_for_rewrite = "Provide the new text and I will tell you what new element was added or change in tone was made to improve it - with no references to the original.  I will avoid mentioning names of characters.  It is crucial no person, place or thing from the original text be mentioned.  For example - I will not say things like 'change the puppet show into a book report' - I would just say 'improve this text into a book report'.  If the original text mentions a specific idea, person, place, or thing - I will not mention it in my answer.  For example if there is a 'dog' or 'office' in the original text - the word 'dog' or 'office' must not be in my response.  My answer will be a single sentence." # noqa: E501
+    input_template = "{command}\n{response_template}: {rewrite_prompt}"  # noqa: E501
 
+    def __init__(self,
+                 tokenizer: PreTrainedTokenizer,
+                 example_stack : List[Dict[str, str]],
+                 template_index: Optional[int] = None,
+                 mock_system: bool = False
+                 ) -> None:
+        super().__init__()
+        self.tokenizer = tokenizer
+        self.example_stack = example_stack
+        self.template_index = template_index
+        self.mock_system = mock_system
+        self.message_stack = self.prepare_messages()
+        
+    def prepare_messages(self) -> List[Dict[str, str]]:
+        messages = []
+        if self.mock_system:
+            messages.append({"role": "user", "content": np.random.choice(SYSTEM_PROMPTS)})
+            messages.append({"role": "assistant", "content": "Understood, I will follow your instructions."})
+        for message in self.example_stack:
+            messages.append({"role": "user", "content": f"{self.orig_prefix} {message['original_text']}"})
+            messages.append({"role": "assistant", "content": self.llm_response_for_rewrite})
+            messages.append({"role": "user", "content": f"{self.rewrite_prefix} {message['rewritten_text']}"})
+            messages.append({"role": "assistant", "content": f"{self.start_response} {message['rewrite_prompt']}"})
+        return messages
+            
+
+
+    def format_row(self, original_text: str, rewritten_text: str, rewrite_prompt: Optional[str] = None) -> str:
+        tokenizer = self.tokenizer
+        rewrite_prompt = rewrite_prompt or ""
+        chat = copy.deepcopy(self.message_stack)
+        chat.append({"role": "user", "content": f"{self.orig_prefix} {original_text}"})
+        chat.append({"role": "assistant", "content": self.llm_response_for_rewrite})
+        chat.append({"role": "user", "content": f"{self.rewrite_prefix} {rewritten_text}"})
+        chat.append({"role": "assistant", "content": f"{self.start_response} {rewrite_prompt}"})
+        chat = list(filter(bool, chat))
+        output = tokenizer.apply_chat_template(chat, tokenize=False)
+        output = output.replace(tokenizer.bos_token, "").replace(tokenizer.eos_token, "")
+        return output
 
 class ChatFormatter(Formatter):
     response_template = None
@@ -89,6 +144,10 @@ class LlamaChatFormatter(ChatFormatter):
 class MistralChatFormatter(ChatFormatter):
     response_template = "[/INST]"
     include_system = False
+    
+class MistralChatMessageStackFormatter(MessageStackFormatter):
+    response_template = f"[/INST]{MessageStackFormatter.start_response}"
+    include_system = False
 
 
 class GemmaITFormatter(ChatFormatter):
@@ -102,4 +161,5 @@ FORMATTERS_MAPPING: Dict[str, type[Formatter]] = {
     "gemma-it": GemmaITFormatter,
     "mistral-it": MistralChatFormatter,
     "llama-chat": LlamaChatFormatter,
+    "mistral-message-stack": MistralChatMessageStackFormatter
 }
