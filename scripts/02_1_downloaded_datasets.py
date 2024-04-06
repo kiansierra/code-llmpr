@@ -6,7 +6,7 @@ import pandas as pd
 from datasets import Dataset, DatasetDict
 
 import wandb
-from llm_prompt import get_configs, REWRITE_PROMPTS
+from llm_prompt import get_configs, REWRITE_PROMPTS, TextLabeler
 
 INPUT_DATA_DIR = os.environ.get("INPUT_DATA_DIR", "../input")
 OUTPUT_DATASET_TYPE = "rewritten_texts"
@@ -54,6 +54,9 @@ def main():
     select_columns = KEEP_COLUMNS + ['prompt_source', 'prompt_cluster']
     dataset_dict = DatasetDict({key: dataset.filter(lambda x: x["split"] == key).select_columns(select_columns)
                                 for key in ["train", "validation", "test"]})
+    ## Add probability of different classes and filter out texts with low probability
+    with TextLabeler() as labeler:
+        dataset_dict = dataset_dict.map(labeler, batched=True, batch_size=64, desc="Labeling Texts Classes")
     dataset_name = f"v-{version}"
     dataset_dict.save_to_disk(f"{INPUT_DATA_DIR}/{OUTPUT_DATASET_TYPE}/{dataset_name}")
     artifact = wandb.Artifact(f"{dataset_name}-{OUTPUT_DATASET_TYPE}", type=OUTPUT_DATASET_TYPE)
