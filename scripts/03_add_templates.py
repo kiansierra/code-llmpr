@@ -25,7 +25,7 @@ def main() -> None:
     raw_dataset_dict = load_from_disk(datadir)
     artifact = run.use_artifact(f"{INPUT_PROMPTS_DATASET_NAME}:latest")
     datadir = artifact.download(f"./artifacts/{INPUT_PROMPTS_DATASET_NAME}")
-    prompts_df = pd.read_parquet(f"./artifacts/{INPUT_PROMPTS_DATASET_NAME}/prompts.parquet")
+    prompts_df = pd.read_parquet(f"{datadir}/prompts.parquet")
     dataset_templates = []
     all_rewrite_prompts = prompts_df["rewrite_prompt"].tolist()
     prompts_df = prompts_df.rename(columns={"source": "prompt_source", "cluster": "prompt_cluster"})
