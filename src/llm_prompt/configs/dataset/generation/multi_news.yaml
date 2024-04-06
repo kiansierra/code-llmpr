@@ -1,0 +1,3 @@
+dataset_name:  "multi_news"
+key_column: "summary"
+splits: ['train', 'validation', 'test']
