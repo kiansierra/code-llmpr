@@ -148,7 +148,7 @@ REWRITE_PROMPTS = {
     "style": ALL_STYLE_PROMPTS,
     "period": ALL_PERIOD_PROMPTS,
     "basic": BASIC_REWRITE_PROMPTS,
-    'impove': ALL_IMPROVE_PROMPTS,
+    "impove": ALL_IMPROVE_PROMPTS,
 }
 
 REWRITE_TEMPLATES = [

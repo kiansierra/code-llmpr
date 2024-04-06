@@ -8,8 +8,7 @@ import torch
 from datasets import load_from_disk
 from dotenv import load_dotenv
 from omegaconf import OmegaConf
-from transformers import (AutoModelForCausalLM, AutoTokenizer,
-                          BitsAndBytesConfig, PreTrainedTokenizer)
+from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig, PreTrainedTokenizer
 
 import wandb
 from llm_prompt import FORMATTERS_MAPPING, CosineScorer

@@ -6,7 +6,6 @@ from datasets import Dataset, DatasetDict, concatenate_datasets, load_from_disk
 from loguru import logger
 
 import wandb
-from llm_prompt import REWRITE_PROMPTS
 
 SPLITS = ["train", "validation", "test"]
 
@@ -37,7 +36,7 @@ def main() -> None:
         df = dataset.to_pandas()
         df = df.explode("rewrite_prompt")
         logger.info(f"Merging prompts metadata to {name}")
-        df = df.merge(prompts_df[['rewrite_prompt','prompt_source', 'prompt_cluster']], on='rewrite_prompt')
+        df = df.merge(prompts_df[["rewrite_prompt", "prompt_source", "prompt_cluster"]], on="rewrite_prompt")
         logger.info(f"Number of examples in {name}: {len(df)}")
         dataset_templates.append(Dataset.from_pandas(df))
     dataset = concatenate_datasets(dataset_templates)

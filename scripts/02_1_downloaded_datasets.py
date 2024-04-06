@@ -6,7 +6,7 @@ import pandas as pd
 from datasets import Dataset, DatasetDict
 
 import wandb
-from llm_prompt import get_configs, REWRITE_PROMPTS, TextLabeler
+from llm_prompt import TextLabeler, get_configs
 
 INPUT_DATA_DIR = os.environ.get("INPUT_DATA_DIR", "../input")
 OUTPUT_DATASET_TYPE = "rewritten_texts"
@@ -22,7 +22,7 @@ def parser():
     return argparser.parse_args()
 
 
-def gather_downloaded_datasets(seed:int) -> pd.DataFrame:
+def gather_downloaded_datasets(seed: int) -> pd.DataFrame:
     dataset_configs = get_configs("dataset/downloaded")
     all_dfs = []
     for name, config in dataset_configs.items():
@@ -49,11 +49,15 @@ def main():
     datadir = artifact.download(f"./artifacts/{INPUT_PROMPTS_DATASET_NAME}")
     prompts_df = pd.read_parquet(f"{datadir}/prompts.parquet")
     prompts_df = prompts_df.rename(columns={"source": "prompt_source", "cluster": "prompt_cluster"})
-    df = df.merge(prompts_df[['rewrite_prompt','prompt_source', 'prompt_cluster']], on='rewrite_prompt')
+    df = df.merge(prompts_df[["rewrite_prompt", "prompt_source", "prompt_cluster"]], on="rewrite_prompt")
     dataset = Dataset.from_pandas(df)
-    select_columns = KEEP_COLUMNS + ['prompt_source', 'prompt_cluster']
-    dataset_dict = DatasetDict({key: dataset.filter(lambda x: x["split"] == key).select_columns(select_columns)
-                                for key in ["train", "validation", "test"]})
+    select_columns = KEEP_COLUMNS + ["prompt_source", "prompt_cluster"]
+    dataset_dict = DatasetDict(
+        {
+            key: dataset.filter(lambda x: x["split"] == key).select_columns(select_columns)
+            for key in ["train", "validation", "test"]
+        }
+    )
     ## Add probability of different classes and filter out texts with low probability
     with TextLabeler() as labeler:
         dataset_dict = dataset_dict.map(labeler, batched=True, batch_size=64, desc="Labeling Texts Classes")

@@ -1,18 +1,20 @@
 import os
-from loguru import logger
+
 import numpy as np
 import pandas as pd
-from datasets import load_from_disk
+from loguru import logger
 from sentence_transformers import SentenceTransformer
-import wandb
-from llm_prompt import  REWRITE_PROMPTS, get_configs
 from sklearn.cluster import KMeans
+
+import wandb
+from llm_prompt import REWRITE_PROMPTS, get_configs
 
 INPUT_DATA_DIR = os.environ.get("INPUT_DATA_DIR", "../input")
 INPUT_DATASET_TYPE = "rewritten_texts"
 NUMBER_CLUSTERS = 10
 SEED = 42
 KEEP_COLUMNS = ["original_text", "rewritten_text", "rewrite_prompt", "source"]
+
 
 def gather_downloaded_datasets() -> pd.DataFrame:
     dataset_configs = get_configs("dataset/downloaded")
@@ -28,17 +30,19 @@ def gather_downloaded_datasets() -> pd.DataFrame:
     df = df.dropna().reset_index(drop=True)
     return df
 
+
 def main() -> None:
     run = wandb.init(job_type="generate_prompts")
     df = gather_downloaded_datasets()
-    prompt_df = df[['source', 'rewrite_prompt']].drop_duplicates().reset_index(drop=True)
+    prompt_df = df[["source", "rewrite_prompt"]].drop_duplicates().reset_index(drop=True)
     all_custom_prompts_df = []
     for key, prompts in REWRITE_PROMPTS.items():
         custom_prompt_df = pd.DataFrame({"rewrite_prompt": prompts})
-        custom_prompt_df['source'] = key
+        custom_prompt_df["source"] = key
         all_custom_prompts_df.append(custom_prompt_df)
     all_custom_prompts_df = pd.concat(all_custom_prompts_df, ignore_index=True)
-    prompt_df = pd.concat([prompt_df, all_custom_prompts_df], ignore_index=True).drop_duplicates().reset_index(drop=True)
+    prompt_df = pd.concat([prompt_df, all_custom_prompts_df], ignore_index=True).drop_duplicates()
+    prompt_df = prompt_df.reset_index(drop=True)
     logger.info(f"Number of prompts: {len(prompt_df)}")
     model = SentenceTransformer("sentence-transformers/sentence-t5-base").to("cuda")
     embeddings = model.encode(prompt_df["rewrite_prompt"].tolist(), batch_size=64, show_progress_bar=True)

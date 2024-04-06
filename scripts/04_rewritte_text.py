@@ -4,10 +4,10 @@ import hydra
 import numpy as np
 from datasets import DatasetDict, load_from_disk
 from dotenv import load_dotenv
-from llm_prompt import REWRITE_TEMPLATES, EnglishLabeler, GemmaGenerator, TextLabeler
 from omegaconf import OmegaConf
 
 import wandb
+from llm_prompt import REWRITE_TEMPLATES, EnglishLabeler, GemmaGenerator, TextLabeler
 
 load_dotenv()
 
@@ -20,11 +20,13 @@ OUTPUT_DATASET_TYPE = "rewritten_texts"
 
 INSTRUCTION_PROMPT = "<start_of_turn>user\n{prompt}<end_of_turn>\n<start_of_turn>model\n"
 
+
 def generate_inputs(row):
     rewrite_prompt = np.random.choice(REWRITE_TEMPLATES)
     rewrite_index = REWRITE_TEMPLATES.index(rewrite_prompt)
     prompt = rewrite_prompt.format(**row)
     return {"input": INSTRUCTION_PROMPT.format(prompt=prompt), "rewrite_index": rewrite_index}
+
 
 @hydra.main(config_path="../src/llm_prompt/configs/scripts", config_name="04_rewritte.yaml", version_base=None)
 def main(args):
@@ -60,19 +62,23 @@ def main(args):
     ## Add probability of english and filter out texts with low probability
     with EnglishLabeler() as labeler:
         dd = dd.map(labeler, batched=True, batch_size=64, desc="Labeling English texts")
-    dd = dd.filter(lambda x: x["en"] > args.prob_en,
-                   desc=f"Filtering texts with english prob above {args.prob_en}",
-                   num_proc=args.num_proc,)
+    dd = dd.filter(
+        lambda x: x["en"] > args.prob_en,
+        desc=f"Filtering texts with english prob above {args.prob_en}",
+        num_proc=args.num_proc,
+    )
     ## Add probability of different classes and filter out texts with low probability
     with TextLabeler() as labeler:
         dd = dd.map(labeler, batched=True, batch_size=64, desc="Labeling Texts Classes")
-    dd = dd.filter(lambda x: x["most_likely_label"] in args.labels,
-                   desc=f"Filtering texts to keep texts with  {args.labels}",
-                   num_proc=args.num_proc,
-                   )
+    dd = dd.filter(
+        lambda x: x["most_likely_label"] in args.labels,
+        desc=f"Filtering texts to keep texts with  {args.labels}",
+        num_proc=args.num_proc,
+    )
 
     ## Create the Input for generation
-    dd = dd.map(generate_inputs,
+    dd = dd.map(
+        generate_inputs,
         desc="Rewriting prompts",
         num_proc=args.num_proc,
     )
