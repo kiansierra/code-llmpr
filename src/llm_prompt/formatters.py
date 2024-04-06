@@ -53,7 +53,7 @@ class BaseMessageStackFormatter(Protocol, Formatter):
         ...
         
     @property
-    def llm_response_for_rewrite(self) -> str
+    def llm_response_for_rewrite(self) -> str:
         ...
 
 
