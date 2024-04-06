@@ -28,7 +28,7 @@ class Formatter(Protocol):
     def input_template(self) -> str:
         ...
         
-class BaseMessageStackFormatter(Protocol, Formatter):
+class BaseMessageStackFormatter(Protocol):
     def format_row(self, original_text: str, rewritten_text: str, rewrite_prompt: Optional[str]) -> str:
         ...
 
