@@ -1,5 +1,5 @@
-num_samples: 4000
-version: 10
+num_samples: 2000
+version: 1
 output_len: 180
 top_k: 50
 seed: Null
