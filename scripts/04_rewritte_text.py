@@ -4,11 +4,10 @@ import hydra
 import numpy as np
 from datasets import DatasetDict, load_from_disk
 from dotenv import load_dotenv
+from llm_prompt import REWRITE_TEMPLATES, EnglishLabeler, GemmaGenerator, TextLabeler
 from omegaconf import OmegaConf
 
 import wandb
-from llm_prompt import (REWRITE_TEMPLATES, EnglishLabeler, TextLabeler,
-                        GemmaGenerator)
 
 load_dotenv()
 
@@ -68,7 +67,7 @@ def main(args):
     with TextLabeler() as labeler:
         dd = dd.map(labeler, batched=True, batch_size=64, desc="Labeling Texts Classes")
     dd = dd.filter(lambda x: x["most_likely_label"] in args.labels,
-                   desc=f"Filtering texts with english prob above {args.labels}",
+                   desc=f"Filtering texts to keep texts with  {args.labels}",
                    num_proc=args.num_proc,
                    )
 
@@ -92,7 +91,7 @@ def main(args):
     artifact = wandb.Artifact(f"{dataset_name}-{OUTPUT_DATASET_TYPE}", type=OUTPUT_DATASET_TYPE)
     artifact.add_dir(save_path)
     for key in dd.keys():
-        artifact.add(f"{key}_data", wandb.Table(data=dd[key].to_pandas()))
+        artifact.add(wandb.Table(data=dd[key].to_pandas()), f"{key}_data")
     run.log_artifact(artifact)
     run.finish()
 
