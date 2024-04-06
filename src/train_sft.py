@@ -9,13 +9,14 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 from trl import DataCollatorForCompletionOnlyLM, SFTTrainer
 
 import wandb
-from llm_prompt import FORMATTERS_MAPPING, MESSAGE_STACK
+from llm_prompt import FORMATTERS_MAPPING, MESSAGE_STACK, Example
 
 load_dotenv()
 
 INPUT_DATASET_NAME = "gathered_rewritten_texts"
 MODEL_OUTPUT_TYPE = "model-sft"
 
+USED_COLUMNS = ["original_text", "rewritten_text", "rewrite_prompt"]
 
 @hydra.main(config_path="llm_prompt/configs/sft", config_name="mistral-7b-it-v2", version_base=None)
 def main(config: DictConfig) -> None:
@@ -28,7 +29,6 @@ def main(config: DictConfig) -> None:
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
     tokenizer.padding_side = "left"
-    formatter = FORMATTERS_MAPPING[config.formatter](tokenizer, MESSAGE_STACK)
     datadir = f"./artifacts/{INPUT_DATASET_NAME}"
     if state.is_main_process:
         run = wandb.init(config=OmegaConf.to_container(config), job_type="train_sft", tags=[config.model_name])
@@ -36,6 +36,14 @@ def main(config: DictConfig) -> None:
         datadir = artifact.download(datadir)
     state.wait_for_everyone()
     dataset_dict = load_from_disk(datadir)
+    test_df_records = dataset_dict['test'].to_pandas()[USED_COLUMNS].to_dict('records')
+    message_stack = [Example(**elem) for elem in test_df_records]
+    formatter_cls = FORMATTERS_MAPPING[config.formatter.name]
+    formatter = formatter_cls(tokenizer,
+                              message_stack,
+                              system=config.formatter.system,
+                              num_examples=config.formatter.num_examples)
+    
 
     args = TrainingArguments(**config.trainer)
     lora_config_resolved = OmegaConf.to_container(config.lora, resolve=True)
@@ -46,7 +54,7 @@ def main(config: DictConfig) -> None:
     model = get_peft_model(model, lora_config)
     dataset_dict = dataset_dict.map(
         lambda x, y, z: {"input": formatter.format_row(x, y, z)},
-        input_columns=["original_text", "rewritten_text", "rewrite_prompt"],
+        input_columns=USED_COLUMNS,
         desc="Formatting Inputs",
     )
     dataset_dict = dataset_dict.select_columns(["input"])

@@ -1,5 +1,5 @@
 import copy
-from typing import Dict, List, Optional, Protocol
+from typing import Dict, List, Literal, Optional, Protocol
 from pydantic import BaseModel
 import numpy as np
 from transformers import PreTrainedTokenizer
@@ -13,6 +13,7 @@ __all__ = [
     "MessageStackFormatter",
     "MistralChatMessageStackFormatter",
     "MESSAGE_STACK",
+    "Example"
 ]
 
 
@@ -135,33 +136,35 @@ class MessageStackFormatter(Formatter):
     def __init__(
         self,
         tokenizer: PreTrainedTokenizer,
-        example_stack: List[Dict[str, str]],
+        example_stack: List[Example],
         template_index: Optional[int] = None,
-        mock_system: bool = False,
+        system: Literal['system', 'mock', 'none'] = 'none',
+        num_examples: int = 1
     ) -> None:
         super().__init__()
         self.tokenizer = tokenizer
         self.example_stack = example_stack
         self.template_index = template_index
-        self.mock_system = mock_system
+        self.system = system
+        self.num_example_messages = num_examples
         self.message_stack = self.prepare_messages()
 
     def prepare_messages(self) -> List[Dict[str, str]]:
         messages = []
-        if self.mock_system:
+        if self.system == 'mock':
             messages.append({"role": "user", "content": np.random.choice(SYSTEM_PROMPTS)})
             messages.append({"role": "assistant", "content": "Understood, I will follow your instructions."})
-        for message in self.example_stack:
-            messages.append({"role": "user", "content": f"{self.orig_prefix} {message['original_text']}"})
-            messages.append({"role": "assistant", "content": self.llm_response_for_rewrite})
-            messages.append({"role": "user", "content": f"{self.rewrite_prefix} {message['rewritten_text']}"})
-            messages.append({"role": "assistant", "content": f"{self.start_response} {message['rewrite_prompt']}"})
+        if self.system == 'system':
+            messages.append({"role": "system", "content": np.random.choice(SYSTEM_PROMPTS)})
+        chosen_examples = np.random.choice(self.example_stack, self.num_example_messages)
+        for example in chosen_examples:
+            messages += example.to_message_list(self)
         return messages
 
     def format_row(self, original_text: str, rewritten_text: str, rewrite_prompt: Optional[str] = None) -> str:
         tokenizer = self.tokenizer
         rewrite_prompt = rewrite_prompt or ""
-        chat = copy.deepcopy(self.message_stack)
+        chat = self.prepare_messages()
         chat.append({"role": "user", "content": f"{self.orig_prefix} {original_text}"})
         chat.append({"role": "assistant", "content": self.llm_response_for_rewrite})
         chat.append({"role": "user", "content": f"{self.rewrite_prefix} {rewritten_text}"})
