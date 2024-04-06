@@ -21,7 +21,7 @@ def main() -> None:
     dataset_dict = {}
     for key, val in dataset_configs.items():
         dataset_dict[key] = dataset_preprocess(**val)
-        logger.info(f"Dataset: {key} Original Length: {len(value)}")
+        logger.info(f"Dataset: {key} Original Length: {len(val)}")
     dataset_dict = DatasetDict(dataset_dict)
     dataset_dict = dataset_dict.filter(
         lambda x: x["original_length"] < MAX_WORDS,
