@@ -5,5 +5,5 @@ top_k: 50
 seed: Null
 batch_size: 12
 split: train
-online: False
 prob_en: 0.95
+labels: [ "tweet", "news", "story"]

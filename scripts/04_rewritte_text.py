@@ -7,7 +7,7 @@ from dotenv import load_dotenv
 from omegaconf import OmegaConf
 
 import wandb
-from llm_prompt import (REWRITE_TEMPLATES, APIGenerator, EnglishLabeler,
+from llm_prompt import (REWRITE_TEMPLATES, EnglishLabeler, TextLabeler,
                         GemmaGenerator)
 
 load_dotenv()
@@ -62,16 +62,17 @@ def main(args):
     with EnglishLabeler() as labeler:
         dd = dd.map(labeler, batched=True, batch_size=64, desc="Labeling English texts")
     dd = dd.filter(lambda x: x["en"] > args.prob_en, desc=f"Filtering texts with english prob above {args.prob_en}")
+    ## Add probability of different classes and filter out texts with low probability
+    with TextLabeler() as labeler:
+        dd = dd.map(labeler, batched=True, batch_size=64, desc="Labeling Texts Classes")
+    dd = dd.filter(lambda x: x["most_likely_label"] in args.labels, desc=f"Filtering texts with english prob above {args.labels}")
 
     ## Create the Input for generation
     dd = dd.map(generate_inputs,
         desc="Rewriting prompts",
         num_proc=4,
     )
-    if args.online:
-        generator = APIGenerator("google/gemma-7b-it")
-    else:
-        generator = GemmaGenerator(VARIANT, WEIGHTS_DIR, {"output_len": args.output_len, "top_k": args.top_k})
+    generator = GemmaGenerator(VARIANT, WEIGHTS_DIR, {"output_len": args.output_len, "top_k": args.top_k})
     generator.setup()
     dd = dd.map(
         generator.generate_batch,
