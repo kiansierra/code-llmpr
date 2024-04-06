@@ -9,7 +9,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 from trl import DataCollatorForCompletionOnlyLM, SFTTrainer
 
 import wandb
-from llm_prompt import FORMATTERS_MAPPING
+from llm_prompt import FORMATTERS_MAPPING, MESSAGE_STACK
 
 load_dotenv()
 
@@ -28,7 +28,7 @@ def main(config: DictConfig) -> None:
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
     tokenizer.padding_side = "left"
-    formatter = FORMATTERS_MAPPING[config.formatter](tokenizer)
+    formatter = FORMATTERS_MAPPING[config.formatter](tokenizer, MESSAGE_STACK)
     datadir = f"./artifacts/{INPUT_DATASET_NAME}"
     if state.is_main_process:
         run = wandb.init(config=OmegaConf.to_container(config), job_type="train_sft", tags=[config.model_name])
@@ -60,7 +60,7 @@ def main(config: DictConfig) -> None:
         eval_dataset=dataset_dict["validation"],
         dataset_text_field="input",
         data_collator=collator,
-        max_seq_length=1024,
+        max_seq_length=2048,
     )
 
     trainer.train()
