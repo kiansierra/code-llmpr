@@ -18,16 +18,16 @@ model:
 
 trainer:
   output_dir: ../checkpoints/sft/${output_folder_name}
-  per_device_train_batch_size: 2
+  per_device_train_batch_size: 1
   gradient_accumulation_steps: 64
   learning_rate: 2e-4
   save_strategy: steps
   num_train_epochs: 2
   logging_steps: 5
-  save_steps: 30
+  save_steps: 20
   save_total_limit: 2
   evaluation_strategy: steps
-  eval_steps: 30
+  eval_steps: 20
   max_steps: -1
   overwrite_output_dir: True
   dataloader_num_workers: 4

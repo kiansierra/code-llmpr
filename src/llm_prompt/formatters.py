@@ -1,6 +1,6 @@
 import copy
 from typing import Dict, List, Optional, Protocol
-
+from pydantic import BaseModel
 import numpy as np
 from transformers import PreTrainedTokenizer
 
@@ -27,6 +27,35 @@ class Formatter(Protocol):
     @property
     def input_template(self) -> str:
         ...
+        
+class BaseMessageStackFormatter(Protocol, Formatter):
+    def format_row(self, original_text: str, rewritten_text: str, rewrite_prompt: Optional[str]) -> str:
+        ...
+
+    @property
+    def response_template(self) -> str:
+        ...
+
+    @property
+    def input_template(self) -> str:
+        ...
+        
+    @property
+    def start_response(self) -> str:
+        ...
+    
+    @property
+    def orig_prefix(self) -> str:
+        ...
+
+    @property
+    def rewrite_prefix(self) -> str:
+        ...
+        
+    @property
+    def llm_response_for_rewrite(self) -> str
+        ...
+
 
 
 QUERY_TEMPLATES = [
@@ -65,6 +94,21 @@ class BaseFormatter(Formatter):
             response_template=self.response_template,
             rewrite_prompt=rewrite_prompt,
         )
+        
+class Example(BaseModel):
+    original_text : str
+    rewritten_text : str
+    rewrite_prompt : Optional[str] = None
+    
+    def to_message_list(self, formatter:BaseMessageStackFormatter) -> List[Dict[str, str]]:
+        messages = []
+        messages.append({"role": "user", "content": f"{formatter.orig_prefix} {self.original_text}"})
+        messages.append({"role": "assistant", "content": formatter.llm_response_for_rewrite})
+        messages.append({"role": "user", "content": f"{formatter.rewrite_prefix} {self.rewritten_text}"})
+        messages.append({"role": "assistant", "content": f"{formatter.start_response} {self.rewrite_prompt}"})
+        return messages
+    
+    
 
 
 MESSAGE_STACK = [
