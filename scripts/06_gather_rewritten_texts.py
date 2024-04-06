@@ -14,12 +14,12 @@ INPUT_DATA_DIR = os.environ.get("INPUT_DATA_DIR", "../input")
 INPUT_DATASET_TYPE = "labeled_rewritten_texts"
 OUTPUT_DATASET_NAME = "gathered_rewritten_texts"
 
-KEEP_COLUMNS = ["original_text", "rewritten_text", "rewrite_prompt", "source", "yes", "en"]
+KEEP_COLUMNS = ["original_text", "rewritten_text", "rewrite_prompt", "source", "yes", "most_likely_label"]
 
 
 def parser():
     argparser = argparse.ArgumentParser()
-    argparser.add_argument("--yes", type=float, default=0.7)
+    argparser.add_argument("--yes", type=float, default=0.5)
     return argparser.parse_args()
 
 
