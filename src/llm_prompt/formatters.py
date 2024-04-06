@@ -212,6 +212,14 @@ class MistralChatFormatter(ChatFormatter):
 class MistralChatMessageStackFormatter(MessageStackFormatter):
     response_template = f"[/INST]{MessageStackFormatter.start_response}"
     include_system = False
+    
+class LlamaMesssageStack(MessageStackFormatter):
+    response_template = f"[/INST]{MessageStackFormatter.start_response}"
+    include_system = False
+    
+class GemmaMesssageStack(MessageStackFormatter):
+    response_template = f"<start_of_turn>model{MessageStackFormatter.start_response}"
+    include_system = False
 
 
 class GemmaITFormatter(ChatFormatter):
@@ -226,4 +234,7 @@ FORMATTERS_MAPPING: Dict[str, type[Formatter]] = {
     "mistral-it": MistralChatFormatter,
     "llama-chat": LlamaChatFormatter,
     "mistral-message-stack": MistralChatMessageStackFormatter,
+    "llama-message-stack": LlamaMesssageStack,
+    "gemma-message-stack": GemmaMesssageStack,
+    
 }

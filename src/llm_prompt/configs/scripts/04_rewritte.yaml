@@ -1,7 +1,7 @@
-num_samples: 2000
-version: 2
-output_len: 80
-top_k: 30
+num_samples: 1500
+version: 1
+output_len: 100
+top_k: 20
 seed: Null
 batch_size: 8
 split: train
