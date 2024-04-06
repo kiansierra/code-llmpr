@@ -1,7 +1,6 @@
 style:
 	isort src scripts
 	ruff --fix src scripts
-	ruff format src scripts
 	black src scripts
 
 check:

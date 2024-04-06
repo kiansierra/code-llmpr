@@ -3,6 +3,7 @@ import os
 from datasets import DatasetDict
 from dotenv import load_dotenv
 from loguru import logger
+
 import wandb
 from llm_prompt import dataset_preprocess, get_configs
 
@@ -28,7 +29,7 @@ def main() -> None:
         desc=f"Filtering texts with over {MAX_WORDS} words",
         num_proc=NUM_PROC,
     )
-    for key,value in dataset_dict.items():
+    for key, value in dataset_dict.items():
         logger.info(f"Dataset: {key} Cleaned up Length: {len(value)}")
     os.makedirs(INPUT_DATA_DIR, exist_ok=True)
     dataset_dict.save_to_disk(f"{INPUT_DATA_DIR}/{DATASET_NAME}")

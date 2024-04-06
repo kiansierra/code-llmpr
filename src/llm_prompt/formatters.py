@@ -1,7 +1,7 @@
-import copy
 from typing import Dict, List, Literal, Optional, Protocol
-from pydantic import BaseModel
+
 import numpy as np
+from pydantic import BaseModel
 from transformers import PreTrainedTokenizer
 
 __all__ = [
@@ -13,7 +13,7 @@ __all__ = [
     "MessageStackFormatter",
     "MistralChatMessageStackFormatter",
     "MESSAGE_STACK",
-    "Example"
+    "Example",
 ]
 
 
@@ -28,7 +28,8 @@ class Formatter(Protocol):
     @property
     def input_template(self) -> str:
         ...
-        
+
+
 class BaseMessageStackFormatter(Protocol):
     def format_row(self, original_text: str, rewritten_text: str, rewrite_prompt: Optional[str]) -> str:
         ...
@@ -40,11 +41,11 @@ class BaseMessageStackFormatter(Protocol):
     @property
     def input_template(self) -> str:
         ...
-        
+
     @property
     def start_response(self) -> str:
         ...
-    
+
     @property
     def orig_prefix(self) -> str:
         ...
@@ -52,11 +53,10 @@ class BaseMessageStackFormatter(Protocol):
     @property
     def rewrite_prefix(self) -> str:
         ...
-        
+
     @property
     def llm_response_for_rewrite(self) -> str:
         ...
-
 
 
 QUERY_TEMPLATES = [
@@ -95,21 +95,20 @@ class BaseFormatter(Formatter):
             response_template=self.response_template,
             rewrite_prompt=rewrite_prompt,
         )
-        
+
+
 class Example(BaseModel):
-    original_text : str
-    rewritten_text : str
-    rewrite_prompt : Optional[str] = None
-    
-    def to_message_list(self, formatter:BaseMessageStackFormatter) -> List[Dict[str, str]]:
+    original_text: str
+    rewritten_text: str
+    rewrite_prompt: Optional[str] = None
+
+    def to_message_list(self, formatter: BaseMessageStackFormatter) -> List[Dict[str, str]]:
         messages = []
         messages.append({"role": "user", "content": f"{formatter.orig_prefix} {self.original_text}"})
         messages.append({"role": "assistant", "content": formatter.llm_response_for_rewrite})
         messages.append({"role": "user", "content": f"{formatter.rewrite_prefix} {self.rewritten_text}"})
         messages.append({"role": "assistant", "content": f"{formatter.start_response} {self.rewrite_prompt}"})
         return messages
-    
-    
 
 
 MESSAGE_STACK = [
@@ -138,8 +137,8 @@ class MessageStackFormatter(Formatter):
         tokenizer: PreTrainedTokenizer,
         example_stack: List[Example],
         template_index: Optional[int] = None,
-        system: Literal['system', 'mock', 'none'] = 'none',
-        num_examples: int = 1
+        system: Literal["system", "mock", "none"] = "none",
+        num_examples: int = 1,
     ) -> None:
         super().__init__()
         self.tokenizer = tokenizer
@@ -151,10 +150,10 @@ class MessageStackFormatter(Formatter):
 
     def prepare_messages(self) -> List[Dict[str, str]]:
         messages = []
-        if self.system == 'mock':
+        if self.system == "mock":
             messages.append({"role": "user", "content": np.random.choice(SYSTEM_PROMPTS)})
             messages.append({"role": "assistant", "content": "Understood, I will follow your instructions."})
-        if self.system == 'system':
+        if self.system == "system":
             messages.append({"role": "system", "content": np.random.choice(SYSTEM_PROMPTS)})
         chosen_examples = np.random.choice(self.example_stack, self.num_example_messages)
         for example in chosen_examples:
@@ -212,11 +211,13 @@ class MistralChatFormatter(ChatFormatter):
 class MistralChatMessageStackFormatter(MessageStackFormatter):
     response_template = f"[/INST]{MessageStackFormatter.start_response}"
     include_system = False
-    
+
+
 class LlamaMesssageStack(MessageStackFormatter):
     response_template = f"[/INST] {MessageStackFormatter.start_response}"
     include_system = False
-    
+
+
 class GemmaMesssageStack(MessageStackFormatter):
     response_template = f"<start_of_turn>model\n{MessageStackFormatter.start_response}"
     include_system = False
@@ -236,5 +237,4 @@ FORMATTERS_MAPPING: Dict[str, type[Formatter]] = {
     "mistral-message-stack": MistralChatMessageStackFormatter,
     "llama-message-stack": LlamaMesssageStack,
     "gemma-message-stack": GemmaMesssageStack,
-    
 }

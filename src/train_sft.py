@@ -9,7 +9,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 from trl import DataCollatorForCompletionOnlyLM, SFTTrainer
 
 import wandb
-from llm_prompt import FORMATTERS_MAPPING, MESSAGE_STACK, Example
+from llm_prompt import FORMATTERS_MAPPING, Example
 
 load_dotenv()
 
@@ -17,6 +17,7 @@ INPUT_DATASET_NAME = "gathered_rewritten_texts"
 MODEL_OUTPUT_TYPE = "model-sft"
 
 USED_COLUMNS = ["original_text", "rewritten_text", "rewrite_prompt"]
+
 
 @hydra.main(config_path="llm_prompt/configs/sft", config_name="llama2-7b-chat", version_base=None)
 def main(config: DictConfig) -> None:
@@ -36,14 +37,12 @@ def main(config: DictConfig) -> None:
         datadir = artifact.download(datadir)
     state.wait_for_everyone()
     dataset_dict = load_from_disk(datadir)
-    test_df_records = dataset_dict['test'].to_pandas()[USED_COLUMNS].to_dict('records')
+    test_df_records = dataset_dict["test"].to_pandas()[USED_COLUMNS].to_dict("records")
     message_stack = [Example(**elem) for elem in test_df_records]
     formatter_cls = FORMATTERS_MAPPING[config.formatter.name]
-    formatter = formatter_cls(tokenizer,
-                              message_stack,
-                              system=config.formatter.system,
-                              num_examples=config.formatter.num_examples)
-    
+    formatter = formatter_cls(
+        tokenizer, message_stack, system=config.formatter.system, num_examples=config.formatter.num_examples
+    )
 
     args = TrainingArguments(**config.trainer)
     lora_config_resolved = OmegaConf.to_container(config.lora, resolve=True)
