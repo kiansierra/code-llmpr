@@ -27,11 +27,13 @@ def main() -> None:
     prompts_df = pd.read_parquet(f"{datadir}/prompts.parquet")
     dataset_templates = []
     all_rewrite_prompts = prompts_df["rewrite_prompt"].tolist()
+    probs = 1/prompts_df.groupby(['source'])['rewrite_prompt'].transform('count')
+    probs /= probs.sum()
     prompts_df = prompts_df.rename(columns={"source": "prompt_source", "cluster": "prompt_cluster"})
     logger.info(f"Number of rewrite prompts: {len(all_rewrite_prompts)}")
     for name, dataset in raw_dataset_dict.items():
         logger.info(f"Adding prompts to {name}")
-        selected_prompts = np.random.choice(all_rewrite_prompts, (len(dataset), NUM_PROMPTS_PER_TEXT))
+        selected_prompts = np.random.choice(all_rewrite_prompts, (len(dataset), NUM_PROMPTS_PER_TEXT), p=probs.values)
         dataset = dataset.add_column("rewrite_prompt", selected_prompts.tolist())
         df = dataset.to_pandas()
         df = df.explode("rewrite_prompt")
