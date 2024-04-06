@@ -57,6 +57,38 @@ class EnglishLabeler(Preprocessor):
     def cleanup(self) -> None:
         del self.model, self.tokenizer
         torch.cuda.empty_cache()
+        
+        
+class TextLabeler(Preprocessor):
+    candidate_labels = ["marketing", "tweet", "news", "story"]
+    hypothesis_template = "This text is about {}"
+
+    def setup(self) -> None:
+        self.classifier = pipeline("zero-shot-classification", model="MoritzLaurer/deberta-v3-large-zeroshot-v2.0-c", device="cuda")
+
+    def cleanup(self) -> None:
+        del self.classifier
+        torch.cuda.empty_cache()
+
+    def __enter__(self) -> "TextLabeler":
+        self.setup()
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback) -> None:
+        self.cleanup()
+
+    def __call__(self, batch):
+        classifier = self.classifier
+        candidate_labels = self.candidate_labels
+        # Get the prob for the yes class
+        outputs = classifier(batch["original_text"],
+                             candidate_labels,
+                             hypothesis_template=self.hypothesis_template,
+                             multi_label=False)
+        output = {"most_likely_label": [output["labels"][np.argmax(output["scores"])] for output in outputs]}
+        for key in self.candidate_labels:
+            output[key] = [output["scores"][output["labels"].index(key)] for output in outputs]
+        return output
 
 
 class ResponsePollutionLabeler(Preprocessor):
