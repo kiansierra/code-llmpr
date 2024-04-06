@@ -214,11 +214,11 @@ class MistralChatMessageStackFormatter(MessageStackFormatter):
     include_system = False
     
 class LlamaMesssageStack(MessageStackFormatter):
-    response_template = f"[/INST]{MessageStackFormatter.start_response}"
+    response_template = f"[/INST] {MessageStackFormatter.start_response}"
     include_system = False
     
 class GemmaMesssageStack(MessageStackFormatter):
-    response_template = f"<start_of_turn>model{MessageStackFormatter.start_response}"
+    response_template = f"<start_of_turn>model\n{MessageStackFormatter.start_response}"
     include_system = False
 
 
