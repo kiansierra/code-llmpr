@@ -4,7 +4,7 @@ model_name: gemma-2b-it
 formatter: 
   name: gemma-message-stack
   system: mock
-  num_examples: 2
+  num_examples: 1
 
 quantization:
   load_in_4bit: True

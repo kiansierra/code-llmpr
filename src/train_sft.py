@@ -19,7 +19,7 @@ MODEL_OUTPUT_TYPE = "model-sft"
 USED_COLUMNS = ["original_text", "rewritten_text", "rewrite_prompt"]
 
 
-@hydra.main(config_path="llm_prompt/configs/sft", config_name="llama2-7b-chat", version_base=None)
+@hydra.main(config_path="llm_prompt/configs/sft", config_name="gemma-2b-it", version_base=None)
 def main(config: DictConfig) -> None:
     state = PartialState()
     quantization_config = BitsAndBytesConfig(**config.quantization)
