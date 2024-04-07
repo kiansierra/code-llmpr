@@ -10,7 +10,7 @@ __all__ = ["dataset_preprocess"]
 
 def dataset_preprocess(
     dataset_name: str,
-    key_column: str,
+    key_column: str | List[str],
     subset: Optional[str] = None,
     splits: Optional[List[str]] = None,
     data_files: Optional[str] = None,
@@ -22,7 +22,13 @@ def dataset_preprocess(
         if isinstance(data_files, DictConfig):
             data_files = OmegaConf.to_container(data_files)
         datasets = load_dataset(dataset_name, data_files=data_files)
-    datasets = datasets.rename_column(key_column, NEW_KEY_COLUMN)
+    if not isinstance(key_column, str):
+        datasets = datasets.map(
+            lambda x: {NEW_KEY_COLUMN: "\n".join([x[col] for col in key_column])},
+            remove_columns=key_column,
+        )
+    else:
+        datasets = datasets.rename_column(key_column, NEW_KEY_COLUMN)
     datasets = datasets.select_columns([NEW_KEY_COLUMN])
     dataset_list = []
     for subset in splits:

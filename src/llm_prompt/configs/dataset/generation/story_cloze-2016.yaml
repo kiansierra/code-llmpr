@@ -1,0 +1,3 @@
+dataset_name:  "gimmaru/story_cloze-2016"
+key_column: [input_sentence_1, input_sentence_2, input_sentence_3, input_sentence_4]
+splits: ['test']

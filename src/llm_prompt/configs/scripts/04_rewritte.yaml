@@ -1,0 +1,10 @@
+num_samples: 1500
+version: 1
+output_len: 100
+top_k: 20
+seed: Null
+batch_size: 8
+split: train
+prob_en: 0.95
+labels: [ "tweet", "news", "story"]
+num_proc: 4

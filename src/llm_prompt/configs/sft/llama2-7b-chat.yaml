@@ -1,7 +1,10 @@
 model_org: meta-llama
 model_name: Llama-2-7b-chat-hf
 
-formatter: llama-chat
+formatter: 
+  name: llama-message-stack
+  system: system
+  num_examples: 2
 
 quantization:
   load_in_4bit: True
@@ -10,16 +13,15 @@ quantization:
 model: 
   pretrained_model_name_or_path: ${model_org}/${model_name}
   torch_dtype: ${dtype:bf16}
-  # device_map: auto
   attn_implementation: flash_attention_2
 
 
 trainer:
   output_dir: ../checkpoints/sft/${model_name}
-  per_device_train_batch_size: 4
+  per_device_train_batch_size: 1
   gradient_accumulation_steps: 32
   save_strategy: steps
-  num_train_epochs: 3
+  num_train_epochs: 1
   logging_steps: 5
   save_steps: 30
   save_total_limit: 3
@@ -35,8 +37,8 @@ trainer:
   length_column_name: 'original_length'
 
 lora:
-    r: 16
-    lora_alpha: 8
+    r: 32
+    lora_alpha: 16
     lora_dropout: 0.1
     target_modules: ["q_proj","k_proj","v_proj","o_proj"]
     bias: "none"

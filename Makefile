@@ -1,7 +1,6 @@
 style:
 	isort src scripts
 	ruff --fix src scripts
-	ruff format src scripts
 	black src scripts
 
 check:
@@ -11,6 +10,6 @@ check:
 
 test:
 	rm -r build
-	rm -r src/slow_fast.egg-info
+	rm -r src/llm_prompt.egg-info
 	pip install -e .
 	pytest tests

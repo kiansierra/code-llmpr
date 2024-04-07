@@ -1,0 +1,65 @@
+import os
+
+import numpy as np
+import pandas as pd
+from loguru import logger
+from sentence_transformers import SentenceTransformer
+from sklearn.cluster import KMeans
+
+import wandb
+from llm_prompt import REWRITE_PROMPTS, get_configs
+
+INPUT_DATA_DIR = os.environ.get("INPUT_DATA_DIR", "../input")
+INPUT_DATASET_TYPE = "rewritten_texts"
+NUMBER_CLUSTERS = 10
+SEED = 42
+KEEP_COLUMNS = ["original_text", "rewritten_text", "rewrite_prompt", "source"]
+
+
+def gather_downloaded_datasets() -> pd.DataFrame:
+    dataset_configs = get_configs("dataset/downloaded")
+    all_dfs = []
+    for name, config in dataset_configs.items():
+        for file in config.files:
+            df = pd.read_csv(f"../input/{config.folder}/{file}")
+            df["source"] = name
+            df["file"] = file
+            all_dfs.append(df)
+    df = pd.concat(all_dfs, ignore_index=True)
+    df = df[KEEP_COLUMNS]
+    df = df.dropna().reset_index(drop=True)
+    return df
+
+
+def main() -> None:
+    run = wandb.init(job_type="generate_prompts")
+    df = gather_downloaded_datasets()
+    prompt_df = df[["source", "rewrite_prompt"]].drop_duplicates().reset_index(drop=True)
+    all_custom_prompts_df = []
+    for key, prompts in REWRITE_PROMPTS.items():
+        custom_prompt_df = pd.DataFrame({"rewrite_prompt": prompts})
+        custom_prompt_df["source"] = key
+        all_custom_prompts_df.append(custom_prompt_df)
+    all_custom_prompts_df = pd.concat(all_custom_prompts_df, ignore_index=True)
+    prompt_df = pd.concat([prompt_df, all_custom_prompts_df], ignore_index=True).drop_duplicates()
+    prompt_df = prompt_df.reset_index(drop=True)
+    logger.info(f"Number of prompts: {len(prompt_df)}")
+    model = SentenceTransformer("sentence-transformers/sentence-t5-base").to("cuda")
+    embeddings = model.encode(prompt_df["rewrite_prompt"].tolist(), batch_size=64, show_progress_bar=True)
+    prompt_df["embeddings"] = embeddings.tolist()
+    kmeans = KMeans(n_clusters=NUMBER_CLUSTERS, random_state=SEED)
+    kmeans.fit(embeddings)
+    prompt_df["cluster"] = kmeans.labels_
+    prompt_df.to_parquet(f"{INPUT_DATA_DIR}/prompts.parquet")
+    np.save(f"{INPUT_DATA_DIR}/kmeans.npy", kmeans.cluster_centers_)
+    prompt_artifact = wandb.Artifact("prompts", type="dataset")
+    prompt_table = wandb.Table(dataframe=prompt_df)
+    prompt_artifact.add_file(f"{INPUT_DATA_DIR}/prompts.parquet")
+    prompt_artifact.add_file(f"{INPUT_DATA_DIR}/kmeans.npy")
+    prompt_artifact.add(prompt_table, "prompts")
+    run.log_artifact(prompt_artifact)
+    run.finish()
+
+
+if __name__ == "__main__":
+    main()

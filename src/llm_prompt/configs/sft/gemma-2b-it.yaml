@@ -1,7 +1,10 @@
 model_org: google
 model_name: gemma-2b-it
 
-formatter: gemma-it
+formatter: 
+  name: gemma-message-stack
+  system: mock
+  num_examples: 1
 
 quantization:
   load_in_4bit: True
@@ -11,7 +14,6 @@ quantization:
 model: 
   pretrained_model_name_or_path: ${model_org}/${model_name}
   torch_dtype: ${dtype:bf16}
-  # device_map: auto
   attn_implementation: flash_attention_2
 
 

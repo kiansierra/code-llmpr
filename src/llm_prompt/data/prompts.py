@@ -34,6 +34,67 @@ HISTORICAL_PERIODS = [
     "Postmodernist",
 ]
 
+CHARACTERS = [
+    "magician",
+    "wizard",
+    "necromancer",
+    "witch",
+    "warrior",
+    "knight",
+    "sorcerer",
+    "elf",
+    "dwarf",
+    "dragon",
+    "king",
+    "priest",
+    "queen",
+    "prince",
+    "princess",
+    "vampire",
+    "werewolf",
+    "zombie",
+    "ghost",
+    "demon",
+    "angel",
+    "fairy",
+    "mermaid",
+    "pirate",
+    "ninja",
+    "samurai",
+    "cowboy",
+    "detective",
+    "spy",
+    "superhero",
+    "villain",
+    "monster",
+    "robot",
+    "alien",
+    "time traveler",
+    "space explorer",
+    "adventurer",
+    "explorer",
+    "scientist",
+    "inventor",
+    "artist",
+    "musician",
+    "poet",
+    "writer",
+    "philosopher",
+    "scholar",
+    "historian",
+    "journalist",
+    "reporter",
+    "blogger",
+    "critic",
+    "activist",
+    "politician",
+    "leader",
+    "rebel",
+    "revolutionary",
+    "anarchist",
+    "capitalist",
+]
+
 AUTHOR_PROMPTS = [
     "Rewrite this essay but do it using the writing style of {author}.",
     "Transform this text as if it was written by {author}.",
@@ -49,6 +110,13 @@ STYLE_PROMPTS = [
 PERIOD_PROMPTS = [
     "Rewrite the text as if it were written during the {period} historical period.",
     "Transform this text using language and cultural references appropriate to the {period} time period",
+]
+
+
+IMPROVE_PROMPTS = [
+    "Improve this text by adding a {character} twist.",
+    "Improve this text by adding a {character}.",
+    "Improve this text by rewriting it from the perspective of a {character}.",
 ]
 
 BASIC_REWRITE_PROMPTS = [
@@ -72,8 +140,16 @@ BASIC_REWRITE_PROMPTS = [
 ALL_AUTHOR_PROMPTS = [prompt.format(author=author) for author in AUTHORS for prompt in AUTHOR_PROMPTS]
 ALL_STYLE_PROMPTS = [prompt.format(style=style) for style in STYLES for prompt in STYLE_PROMPTS]
 ALL_PERIOD_PROMPTS = [prompt.format(period=period) for period in HISTORICAL_PERIODS for prompt in PERIOD_PROMPTS]
+ALL_IMPROVE_PROMPTS = [prompt.format(character=character) for character in CHARACTERS for prompt in IMPROVE_PROMPTS]
 
-REWRITE_PROMPTS = BASIC_REWRITE_PROMPTS + ALL_AUTHOR_PROMPTS + ALL_STYLE_PROMPTS + ALL_PERIOD_PROMPTS
+
+REWRITE_PROMPTS = {
+    "author": ALL_AUTHOR_PROMPTS,
+    "style": ALL_STYLE_PROMPTS,
+    "period": ALL_PERIOD_PROMPTS,
+    "basic": BASIC_REWRITE_PROMPTS,
+    "impove": ALL_IMPROVE_PROMPTS,
+}
 
 REWRITE_TEMPLATES = [
     "{rewrite_prompt} {original_text}",

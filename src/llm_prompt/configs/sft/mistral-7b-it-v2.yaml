@@ -2,7 +2,10 @@ model_org: mistralai
 model_name: Mistral-7B-Instruct-v0.2
 output_folder_name: mistral-7b-it-v2
 
-formatter: mistral-it
+formatter: 
+  name: mistral-message-stack
+  system: mock
+  num_examples: 2
 
 quantization:
   load_in_4bit: True
@@ -12,22 +15,21 @@ quantization:
 model: 
   pretrained_model_name_or_path: ${model_org}/${model_name}
   torch_dtype: ${dtype:bf16}
-  # device_map: auto
   attn_implementation: flash_attention_2
 
 
 trainer:
   output_dir: ../checkpoints/sft/${output_folder_name}
-  per_device_train_batch_size: 4
+  per_device_train_batch_size: 1
   gradient_accumulation_steps: 64
   learning_rate: 2e-4
   save_strategy: steps
-  num_train_epochs: 2
+  num_train_epochs: 1
   logging_steps: 5
-  save_steps: 30
+  save_steps: 20
   save_total_limit: 2
   evaluation_strategy: steps
-  eval_steps: 30
+  eval_steps: 20
   max_steps: -1
   overwrite_output_dir: True
   dataloader_num_workers: 4

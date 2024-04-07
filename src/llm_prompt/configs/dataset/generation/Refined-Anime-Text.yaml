@@ -1,0 +1,3 @@
+dataset_name:  "CausalLM/Refined-Anime-Text"
+key_column: "text"
+splits: ['train']
